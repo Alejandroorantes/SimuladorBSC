@@ -12,6 +12,7 @@ if 'paso' not in st.session_state:
     st.session_state.paso = 1
     st.session_state.presupuesto = 20.0
     st.session_state.historial = []
+    st.session_state.ultimo_impacto = None
     st.session_state.kpis = {
         "Financiera": {
             "ROI": {"actual": 8.0, "ideal": 15.0, "unit": "%"},
@@ -64,62 +65,49 @@ DECISIONES = {
     }
 }
 
-# --- FLUJO DE LA INTERFAZ ---
+# --- NAVEGACIÓN ---
 
-# PASO 1: DIAGNÓSTICO (EMPRESA, CANVAS Y FODA)
 if st.session_state.paso == 1:
     st.title("Fase 1: Diagnóstico Organizacional")
     with st.form("form_f1"):
         st.session_state.empresa = st.text_input("Nombre de la Organización:", "")
         st.session_state.industria = st.selectbox("Industria:", ['Manufactura', 'Servicios', 'Tecnología', 'Retail'])
-        
         st.subheader("Business Model Canvas")
-        st.session_state.canvas_vp = st.text_area("Propuesta de Valor:", placeholder="¿Qué nos diferencia?")
-        st.session_state.canvas_seg = st.text_area("Segmentos de Mercado:", placeholder="¿A quién servimos?")
-        
+        st.session_state.canvas_vp = st.text_area("Propuesta de Valor:")
         st.subheader("Análisis FODA")
         c1, c2 = st.columns(2)
         with c1:
-            st.text_area("Fortalezas:", placeholder="Capacidades internas...")
-            st.text_area("Oportunidades:", placeholder="Tendencias externas...")
+            st.text_area("Fortalezas:")
+            st.text_area("Oportunidades:")
         with c2:
-            st.text_area("Debilidades:", placeholder="Limitaciones internas...")
-            st.text_area("Amenazas:", placeholder="Riesgos del entorno...")
-            
-        if st.form_submit_button("Siguiente: Definir Estrategia"):
+            st.text_area("Debilidades:")
+            st.text_area("Amenazas:")
+        if st.form_submit_button("Siguiente"):
             if st.session_state.empresa:
                 st.session_state.paso = 2
                 st.rerun()
             else:
-                st.error("Debes asignar un nombre a la empresa para continuar.")
+                st.error("Ingresa el nombre de la empresa.")
 
-# PASO 2: PLAY TO WIN
 elif st.session_state.paso == 2:
     st.title("Fase 2: Play to Win (Estrategia)")
     with st.form("form_f2"):
-        st.subheader(f"Estrategia para {st.session_state.empresa}")
-        st.session_state.donde = st.text_input("¿Dónde jugar?", placeholder="Canales, geografías...")
-        st.session_state.como = st.text_input("¿Cómo ganar?", placeholder="Diferenciación, costo, nicho...")
-        st.session_state.capacidades = st.text_area("Capacidades Requeridas:", placeholder="Tecnología, talento, procesos...")
-        
-        if st.form_submit_button("Construir Tablero de Control"):
+        st.session_state.donde = st.text_input("¿Dónde jugar?")
+        st.session_state.como = st.text_input("¿Cómo ganar?")
+        st.text_area("Capacidades Requeridas:")
+        if st.form_submit_button("Iniciar Simulador"):
             st.session_state.paso = 3
             st.rerun()
-        if st.form_submit_button("Volver"):
-            st.session_state.paso = 1
-            st.rerun()
 
-# PASO 3: SIMULADOR (BSC Y DECISIONES)
 elif st.session_state.paso == 3:
     st.title(f"Tablero Estratégico: {st.session_state.empresa}")
-    st.info(f"**Estrategia Resumida:** Ganaremos en *{st.session_state.donde}* mediante *{st.session_state.como}*")
+    st.markdown(f"**Estrategia:** {st.session_state.como} en {st.session_state.donde}")
     
     col_vis, col_ctrl = st.columns([2, 1])
 
     with col_vis:
-        t_matriz, t_gap, t_radar, t_hist = st.tabs(["📋 Matriz BSC", "📊 Análisis Gaps", "🕸 Radar Balance", "📜 Historial"])
+        t_matriz, t_gap, t_radar, t_hist = st.tabs(["📋 Matriz BSC", "📊 Análisis Gaps", "🕸 Radar", "📜 Historial"])
         
-        # Procesar datos
         labels, vals, targets, rows = [], [], [], []
         for p, k_dict in st.session_state.kpis.items():
             for k, d in k_dict.items():
@@ -131,34 +119,26 @@ elif st.session_state.paso == 3:
         
         with t_matriz:
             st.table(pd.DataFrame(rows))
-
         with t_gap:
             fig, ax = plt.subplots(figsize=(10, 5))
-            x = np.arange(len(labels))
-            ax.bar(x - 0.2, vals, 0.4, label='Actual', color='#0D47A1')
-            ax.bar(x + 0.2, targets, 0.4, label='Meta', color='#CFD8DC', alpha=0.6)
-            ax.set_xticks(x)
+            ax.bar(np.arange(len(labels)) - 0.2, vals, 0.4, label='Actual', color='#0D47A1')
+            ax.bar(np.arange(len(labels)) + 0.2, targets, 0.4, label='Meta', color='#CFD8DC', alpha=0.6)
+            ax.set_xticks(np.arange(len(labels)))
             ax.set_xticklabels(labels, rotation=45, ha='right')
             ax.legend()
             st.pyplot(fig)
-
         with t_radar:
             N = len(labels)
             angles = [n / float(N) * 2 * np.pi for n in range(N)]
             angles += angles[:1]
-            fig_r, ax_r = plt.subplots(figsize=(6,6), subplot_kw=dict(polar=True))
-            ax_r.plot(angles, targets + targets[:1], 'r--', alpha=0.4, label="Meta")
-            ax_r.plot(angles, vals + vals[:1], 'b-', linewidth=2, label="Actual")
-            ax_r.fill(angles, vals + vals[:1], 'b', alpha=0.1)
+            fig_r, ax_r = plt.subplots(subplot_kw=dict(polar=True))
+            ax_r.plot(angles, targets + targets[:1], 'r--', alpha=0.3)
+            ax_r.plot(angles, vals + vals[:1], 'b-', linewidth=2)
             ax_r.set_xticks(angles[:-1])
             ax_r.set_xticklabels(labels)
             st.pyplot(fig_r)
-            
         with t_hist:
-            if st.session_state.historial:
-                st.table(pd.DataFrame(st.session_state.historial))
-            else:
-                st.write("No se han ejecutado inversiones aún.")
+            st.table(pd.DataFrame(st.session_state.historial)) if st.session_state.historial else st.write("Sin registros.")
 
     with col_ctrl:
         st.subheader("Panel de Inversión")
@@ -166,22 +146,31 @@ elif st.session_state.paso == 3:
         
         sel = st.selectbox("Elegir Iniciativa:", list(DECISIONES.keys()))
         info = DECISIONES[sel]
-        st.write(f"**Costo:** ${info['costo']}M")
         
         if st.button("Ejecutar Decisión", use_container_width=True):
             if st.session_state.presupuesto >= info['costo']:
+                cambios_recientes = []
                 st.session_state.presupuesto -= info['costo']
-                impactos_txt = []
-                for p, kpis in info['impacto'].items():
-                    for k, v in kpis.items():
-                        st.session_state.kpis[p][k]['actual'] = round(st.session_state.kpis[p][k]['actual'] + v, 2)
-                        impactos_txt.append(f"{k} ({'+' if v>0 else ''}{v})")
                 
-                st.session_state.historial.append({"Iniciativa": sel, "Costo": f"${info['costo']}M", "Impacto": ", ".join(impactos_txt)})
-                st.success(f"Inversión realizada: {sel}")
+                for p, kpis_impact in info['impacto'].items():
+                    for k, v in kpis_impact.items():
+                        anterior = st.session_state.kpis[p][k]['actual']
+                        nuevo = round(anterior + v, 2)
+                        st.session_state.kpis[p][k]['actual'] = nuevo
+                        cambios_recientes.append({"KPI": k, "Anterior": anterior, "Cambio": f"{'+' if v>0 else ''}{v}", "Nuevo": nuevo})
+                
+                st.session_state.ultimo_impacto = {"nombre": sel, "detalles": cambios_recientes}
+                st.session_state.historial.append({"Iniciativa": sel, "Costo": f"${info['costo']}M"})
                 st.rerun()
             else:
-                st.error("Presupuesto insuficiente para esta acción.")
+                st.error("Presupuesto insuficiente.")
+
+        # RESUMEN DE IMPACTO (Aparece justo debajo del botón al ejecutar)
+        if st.session_state.ultimo_impacto:
+            st.markdown("---")
+            st.markdown(f"**⚡ Impacto de: {st.session_state.ultimo_impacto['nombre']}**")
+            df_impacto = pd.DataFrame(st.session_state.ultimo_impacto['detalles'])
+            st.dataframe(df_impacto, hide_index=True)
 
         st.divider()
         if st.button("🔄 Reiniciar Todo", type="secondary"):
