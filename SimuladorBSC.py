@@ -13,6 +13,7 @@ if 'paso' not in st.session_state:
     st.session_state.presupuesto = 20.0
     st.session_state.historial = []
     st.session_state.ultimo_impacto = None
+    st.session_state.diagnostico = {} # Para almacenar Canvas y FODA
     st.session_state.kpis = {
         "Financiera": {
             "ROI": {"actual": 8.0, "ideal": 15.0, "unit": "%"},
@@ -67,21 +68,23 @@ DECISIONES = {
 
 # --- NAVEGACIÓN ---
 
+# PASO 1: DIAGNÓSTICO
 if st.session_state.paso == 1:
     st.title("Fase 1: Diagnóstico Organizacional")
     with st.form("form_f1"):
         st.session_state.empresa = st.text_input("Nombre de la Organización:", "")
         st.session_state.industria = st.selectbox("Industria:", ['Manufactura', 'Servicios', 'Tecnología', 'Retail'])
         st.subheader("Business Model Canvas")
-        st.session_state.canvas_vp = st.text_area("Propuesta de Valor:")
+        st.session_state.diagnostico['vp'] = st.text_area("Propuesta de Valor:")
+        st.session_state.diagnostico['seg'] = st.text_area("Segmentos de Cliente:")
         st.subheader("Análisis FODA")
         c1, c2 = st.columns(2)
         with c1:
-            st.text_area("Fortalezas:")
-            st.text_area("Oportunidades:")
+            st.session_state.diagnostico['fortalezas'] = st.text_area("Fortalezas:")
+            st.session_state.diagnostico['oportunidades'] = st.text_area("Oportunidades:")
         with c2:
-            st.text_area("Debilidades:")
-            st.text_area("Amenazas:")
+            st.session_state.diagnostico['debilidades'] = st.text_area("Debilidades:")
+            st.session_state.diagnostico['amenazas'] = st.text_area("Amenazas:")
         if st.form_submit_button("Siguiente"):
             if st.session_state.empresa:
                 st.session_state.paso = 2
@@ -89,16 +92,18 @@ if st.session_state.paso == 1:
             else:
                 st.error("Ingresa el nombre de la empresa.")
 
+# PASO 2: PLAY TO WIN
 elif st.session_state.paso == 2:
     st.title("Fase 2: Play to Win (Estrategia)")
     with st.form("form_f2"):
         st.session_state.donde = st.text_input("¿Dónde jugar?")
         st.session_state.como = st.text_input("¿Cómo ganar?")
-        st.text_area("Capacidades Requeridas:")
+        st.session_state.diagnostico['capacidades'] = st.text_area("Capacidades Requeridas:")
         if st.form_submit_button("Iniciar Simulador"):
             st.session_state.paso = 3
             st.rerun()
 
+# PASO 3: SIMULADOR
 elif st.session_state.paso == 3:
     st.title(f"Tablero Estratégico: {st.session_state.empresa}")
     st.markdown(f"**Estrategia:** {st.session_state.como} en {st.session_state.donde}")
@@ -160,19 +165,56 @@ elif st.session_state.paso == 3:
                         cambios_recientes.append({"KPI": k, "Anterior": anterior, "Cambio": f"{'+' if v>0 else ''}{v}", "Nuevo": nuevo})
                 
                 st.session_state.ultimo_impacto = {"nombre": sel, "detalles": cambios_recientes}
-                st.session_state.historial.append({"Iniciativa": sel, "Costo": f"${info['costo']}M"})
+                st.session_state.historial.append({"Iniciativa": sel, "Costo": f"${info['costo']}M", "Resultados": ", ".join([f"{c['KPI']}: {c['Nuevo']}" for c in cambios_recientes])})
                 st.rerun()
             else:
                 st.error("Presupuesto insuficiente.")
 
-        # RESUMEN DE IMPACTO (Aparece justo debajo del botón al ejecutar)
         if st.session_state.ultimo_impacto:
             st.markdown("---")
-            st.markdown(f"**⚡ Impacto de: {st.session_state.ultimo_impacto['nombre']}**")
-            df_impacto = pd.DataFrame(st.session_state.ultimo_impacto['detalles'])
-            st.dataframe(df_impacto, hide_index=True)
+            st.dataframe(pd.DataFrame(st.session_state.ultimo_impacto['detalles']), hide_index=True)
 
         st.divider()
+        # BOTÓN DE REPORTE
+        if st.button("📊 GENERAR REPORTE FINAL", type="primary", use_container_width=True):
+            st.session_state.paso = 4
+            st.rerun()
+            
         if st.button("🔄 Reiniciar Todo", type="secondary"):
             st.session_state.clear()
             st.rerun()
+
+# PASO 4: REPORTE FINAL
+elif st.session_state.paso == 4:
+    st.title(f"Reporte de Desempeño Estratégico: {st.session_state.empresa}")
+    
+    st.header("1. Diagnóstico y Estrategia")
+    col_a, col_b = st.columns(2)
+    with col_a:
+        st.markdown(f"**Industria:** {st.session_state.industria}")
+        st.markdown(f"**Propuesta de Valor:** {st.session_state.diagnostico['vp']}")
+        st.markdown(f"**Segmentos:** {st.session_state.diagnostico['seg']}")
+    with col_b:
+        st.markdown(f"**¿Dónde ganar?:** {st.session_state.donde}")
+        st.markdown(f"**¿Cómo ganar?:** {st.session_state.como}")
+
+    st.header("2. Resultados del Balanced Scorecard")
+    report_rows = []
+    for p, kpis in st.session_state.kpis.items():
+        for k, d in kpis.items():
+            gap = round(d['actual'] - d['ideal'], 2)
+            status = "CUMPLIDO" if gap >= 0 else "PENDIENTE"
+            report_rows.append({"Perspectiva": p, "KPI": k, "Valor Final": d['actual'], "Meta": d['ideal'], "Brecha": gap, "Estado": status})
+    st.table(pd.DataFrame(report_rows))
+
+    st.header("3. Historial de Decisiones Tomadas")
+    if st.session_state.historial:
+        st.table(pd.DataFrame(st.session_state.historial))
+    else:
+        st.write("No se ejecutaron inversiones durante la sesión.")
+
+    st.markdown(f"**Presupuesto Remanente:** ${round(st.session_state.presupuesto, 2)}M")
+
+    if st.button("Volver al Simulador"):
+        st.session_state.paso = 3
+        st.rerun()
