@@ -32,7 +32,8 @@ if 'paso' not in st.session_state:
     st.session_state.ultimo_impacto = None
     st.session_state.diagnostico_texto = ""
     st.session_state.empresa = ""
-    st.session_state.datos_f1 = {} # Almacén para el reporte
+    st.session_state.industria = ""
+    st.session_state.datos_f1 = {} 
     st.session_state.kpis = {
         "Financiera": {
             "ROI": {"actual": 8.0, "ideal": 15.0, "unit": "%"},
@@ -64,7 +65,7 @@ DECISIONES = {
 
 # --- NAVEGACIÓN ---
 
-# FASE 1: DIAGNÓSTICO ESTRUCTURADO
+# FASE 1: DIAGNÓSTICO
 if st.session_state.paso == 1:
     st.title("Fase 1: Diagnóstico Integral de Negocio")
     with st.form("diagnostico_form"):
@@ -92,11 +93,10 @@ if st.session_state.paso == 1:
             deb = st.text_area("Debilidades:")
             ame = st.text_area("Amenazas:")
         
-        if st.form_submit_button("Siguiente: Definir Estrategia"):
+        if st.form_submit_button("Siguiente"):
             if empresa_input:
                 st.session_state.empresa = empresa_input
                 st.session_state.industria = industria_input
-                # Guardamos para el reporte
                 st.session_state.datos_f1 = {
                     "Propuesta de Valor": vp, "Procesos Clave": proc, 
                     "Recursos Clave": recursos, "Socios Clave": socios,
@@ -143,10 +143,12 @@ elif st.session_state.paso == 3:
             fig, ax = plt.subplots(figsize=(10, 4))
             x = np.arange(len(labels))
             ax.bar(x - 0.2, vals, 0.4, label='Actual', color='#007bff')
-            ax.bar(x + 0.2, targets, 0.4, label='Meta', color='#e9ecef')
+            ax.bar(x + 0.2, targets, 0.4, label='Meta', color='#e9ecef', alpha=0.5)
             ax.set_xticks(x); ax.set_xticklabels(labels, rotation=45); ax.legend()
             st.pyplot(fig)
-        with t_hist: st.table(pd.DataFrame(st.session_state.historial)) if st.session_state.historial else st.info("No hay inversiones.")
+        with t_hist: 
+            if st.session_state.historial: st.table(pd.DataFrame(st.session_state.historial))
+            else: st.info("No hay inversiones registradas.")
 
     with col_ctrl:
         st.subheader("Simulación")
@@ -158,18 +160,21 @@ elif st.session_state.paso == 3:
             if st.session_state.presupuesto >= info['costo']:
                 mod = calcular_modificador(st.session_state.diagnostico_texto, seleccion)
                 st.session_state.presupuesto -= info['costo']
+                
                 detalles = []
                 for p, k_impacts in info['impacto'].items():
                     for kpi_nom, val in k_impacts.items():
                         v_final = round(val * mod, 2)
-                        st.session_state.kpis[p][kpi_nom]['actual'] += v_final
+                        st.session_state.kpis[p][kpi_nom]['actual'] = round(st.session_state.kpis[p][kpi_nom]['actual'] + v_final, 2)
                         detalles.append({"KPI": kpi_nom, "Impacto": f"+{v_final}" if v_final > 0 else f"{v_final}"})
+                
                 st.session_state.ultimo_impacto = detalles
                 st.session_state.historial.append({"Iniciativa": seleccion, "Costo": f"${info['costo']}M", "Coherencia": "Alta (Bono)" if mod > 1 else "Normal"})
                 st.rerun()
             else: st.error("Presupuesto insuficiente")
 
         if st.session_state.ultimo_impacto:
+            st.write("**Impacto de la última decisión:**")
             st.dataframe(pd.DataFrame(st.session_state.ultimo_impacto), hide_index=True)
 
         st.divider()
@@ -177,38 +182,40 @@ elif st.session_state.paso == 3:
             st.session_state.paso = 4
             st.rerun()
         if st.button("🔄 Reiniciar", use_container_width=True):
-            for key in list(st.session_state.keys()): del st.session_state[key]
+            st.session_state.clear()
             st.rerun()
 
 elif st.session_state.paso == 4:
     st.title("Reporte Estratégico Final")
-    st.header(f"Resultados de Gestión: {st.session_state.empresa} ({st.session_state.industria})")
+    st.header(f"Organización: {st.session_state.empresa} | Industria: {st.session_state.industria}")
     
-    # --- NUEVA SECCIÓN: RESUMEN DE DIAGNÓSTICO ---
-    st.subheader("I. Resumen del Diagnóstico Inicial")
-    with st.expander("Ver detalle de Arquitectura y FODA", expanded=True):
-        ra, rb = st.columns(2)
-        with ra:
-            st.markdown("**Arquitectura de Negocio (Canvas)**")
-            for k in ["Propuesta de Valor", "Procesos Clave", "Recursos Clave", "Socios Clave"]:
-                st.write(f"*- {k}:* {st.session_state.datos_f1[k]}")
-        with rb:
-            st.markdown("**Análisis FODA**")
-            for k in ["Fortalezas", "Oportunidades", "Debilidades", "Amenazas"]:
-                st.write(f"*- {k}:* {st.session_state.datos_f1[k]}")
+    # SECCIÓN DE RESUMEN (CABECERA)
+    st.markdown("---")
+    st.subheader("I. Resumen del Diagnóstico de la Fase 1")
+    col_rep_a, col_rep_b = st.columns(2)
+    with col_rep_a:
+        st.markdown("**Arquitectura de Negocio (Canvas)**")
+        for key in ["Propuesta de Valor", "Procesos Clave", "Recursos Clave", "Socios Clave"]:
+            st.info(f"**{key}:** {st.session_state.datos_f1.get(key, 'N/A')}")
+    with col_rep_b:
+        st.markdown("**Análisis FODA**")
+        for key in ["Fortalezas", "Oportunidades", "Debilidades", "Amenazas"]:
+            st.warning(f"**{key}:** {st.session_state.datos_f1.get(key, 'N/A')}")
 
-    st.subheader("II. Estrategia Play to Win")
-    st.info(f"**¿Dónde jugar?:** {st.session_state.donde} | **¿Cómo ganar?:** {st.session_state.como}")
+    st.markdown("---")
+    st.subheader("II. Estrategia y Resultados")
+    st.success(f"**¿Dónde jugar?:** {st.session_state.donde} | **¿Cómo ganar?:** {st.session_state.como}")
     
-    st.subheader("III. Desempeño Final de KPIs")
+    # KPIs Finales
     final_rows = []
     for p, kpis in st.session_state.kpis.items():
         for k, d in kpis.items():
             final_rows.append({"Perspectiva": p, "KPI": k, "Resultado": d['actual'], "Meta": d['ideal']})
     st.table(pd.DataFrame(final_rows))
     
-    st.subheader("IV. Registro de Inversiones")
-    st.table(pd.DataFrame(st.session_state.historial))
+    # Inversiones
+    st.subheader("III. Bitácora de Inversiones")
+    if st.session_state.historial: st.table(pd.DataFrame(st.session_state.historial))
     st.write(f"**Presupuesto Remanente:** ${round(st.session_state.presupuesto, 2)}M")
     
     if st.button("Volver al Simulador"):
