@@ -5,36 +5,33 @@ import numpy as np
 import copy
 
 # Configuración inicial
-st.set_page_config(page_title="Simulador de Estrategia Pro", layout="wide")
+st.set_page_config(page_title="Simulador de Estrategia Alex", layout="wide")
 
-# --- MOTOR DE COHERENCIA (Lógica de Negocio) ---
-def calcular_modificador(texto_diagnostico, accion):
-    """Analiza si la acción del usuario coincide con lo redactado en el diagnóstico"""
+# --- MOTOR DE COHERENCIA ---
+def calcular_modificador(texto_diagnostico, accion_nombre):
     texto = texto_diagnostico.lower()
-    # Mapeo de palabras clave por decisión
     keywords = {
         "1. Automatización Robótica (RPA/AI)": ["procesos", "eficiencia", "costos", "manual", "lento"],
         "2. Programa de Lealtad Omnicanal": ["clientes", "nps", "fidelidad", "ventas", "servicio"],
         "3. I+D: Productos Sustentables": ["innovacion", "producto", "verde", "sustentable", "futuro"],
         "4. Reskilling de Talento Digital": ["talento", "capacitacion", "gente", "personas", "habilidades"],
-        "5. Expansión a Mercados Emergentes": ["crecimiento", "mercado", "global", "ventas", "nuevo"],
-        "6. Smart Logistics (Supply Chain)": ["logistica", "entrega", "inventario", "cadena", "transporte"],
-        "7. Ciberseguridad y Cloud": ["riesgo", "seguridad", "datos", "nube", "ataque"]
+        "5. Expansión de Mercados": ["crecimiento", "mercado", "global", "ventas", "nuevo"],
+        "6. Smart Logistics": ["logistica", "entrega", "inventario", "cadena", "transporte"],
+        "7. Ciberseguridad": ["riesgo", "seguridad", "datos", "nube", "ataque"]
     }
     
-    # Si encuentra una palabra clave del diagnóstico en la acción seleccionada, da un bono
-    if any(word in texto for word in keywords.get(accion, [])):
-        return 1.2  # +20% de impacto por coherencia estratégica
+    if any(word in texto for word in keywords.get(accion_nombre, [])):
+        return 1.2
     return 1.0
 
-# --- INICIALIZACIÓN ---
+# --- INICIALIZACIÓN DE ESTADO ---
 if 'paso' not in st.session_state:
     st.session_state.paso = 1
     st.session_state.presupuesto = 20.0
     st.session_state.historial = []
     st.session_state.ultimo_impacto = None
-    st.session_state.diagnostico_texto = "" # Para el motor de coherencia
-    st.session_state.diagnostico = {}
+    st.session_state.diagnostico_texto = ""
+    st.session_state.empresa = ""
     st.session_state.kpis = {
         "Financiera": {
             "ROI": {"actual": 8.0, "ideal": 15.0, "unit": "%"},
@@ -59,111 +56,133 @@ DECISIONES = {
     "2. Programa de Lealtad Omnicanal": {"costo": 3.5, "impacto": {"Clientes": {"Satisfacción (NPS)": 18.0, "Cuota Mercado": 4.0}, "Financiera": {"Margen EBITDA": -0.5}}},
     "3. I+D: Productos Sustentables": {"costo": 6.5, "impacto": {"Aprendizaje": {"Índice Innovación": 5.0}, "Clientes": {"Cuota Mercado": 6.0}, "Financiera": {"ROI": -1.5}}},
     "4. Reskilling de Talento Digital": {"costo": 2.5, "impacto": {"Aprendizaje": {"Capacitación": 25.0, "Índice Innovación": 2.0}, "Procesos": {"Eficiencia OEE": 4.0}}},
-    "5. Expansión a Mercados Emergentes": {"costo": 7.5, "impacto": {"Clientes": {"Cuota Mercado": 10.0}, "Financiera": {"ROI": 4.0}, "Procesos": {"Tiempo Ciclo": 2.0}}},
-    "6. Smart Logistics (Supply Chain)": {"costo": 4.0, "impacto": {"Procesos": {"Tiempo Ciclo": -4.0}, "Financiera": {"Margen EBITDA": 3.0}}},
-    "7. Ciberseguridad y Cloud": {"costo": 3.0, "impacto": {"Procesos": {"Eficiencia OEE": 5.0}, "Aprendizaje": {"Índice Innovación": 1.0}}}
+    "5. Expansión de Mercados": {"costo": 7.5, "impacto": {"Clientes": {"Cuota Mercado": 10.0}, "Financiera": {"ROI": 4.0}, "Procesos": {"Tiempo Ciclo": 2.0}}},
+    "6. Smart Logistics": {"costo": 4.0, "impacto": {"Procesos": {"Tiempo Ciclo": -4.0}, "Financiera": {"Margen EBITDA": 3.0}}},
+    "7. Ciberseguridad": {"costo": 3.0, "impacto": {"Procesos": {"Eficiencia OEE": 5.0}, "Aprendizaje": {"Índice Innovación": 1.0}}}
 }
 
 # --- NAVEGACIÓN ---
 if st.session_state.paso == 1:
-    st.title("Fase 1: Diagnóstico y Recolección de Datos")
-    with st.form("f1"):
-        st.session_state.empresa = st.text_input("Empresa:", "")
-        st.session_state.industria = st.selectbox("Industria:", ['Manufactura', 'Servicios', 'Tecnología', 'Retail'])
-        st.session_state.diagnostico['vp'] = st.text_area("Propuesta de Valor (Canvas):")
-        foda_txt = st.text_area("Describa su FODA (Fortalezas, Oportunidades, Debilidades, Amenazas):", placeholder="Ej: Nuestra debilidad es el talento digital...")
+    st.title("Fase 1: Diagnóstico Estratégico")
+    with st.form("diagnostico_form"):
+        empresa_input = st.text_input("Nombre de la Empresa:")
+        industria = st.selectbox("Industria:", ["Manufactura", "Servicios", "Tecnología", "Retail"])
+        canvas_vp = st.text_area("Propuesta de Valor (Canvas):")
+        foda_input = st.text_area("Análisis FODA (Palabras clave):")
+        
         if st.form_submit_button("Siguiente"):
-            st.session_state.diagnostico_texto = foda_txt + " " + st.session_state.diagnostico['vp']
-            st.session_state.paso = 2
-            st.rerun()
+            if empresa_input:
+                st.session_state.empresa = empresa_input
+                st.session_state.diagnostico_texto = f"{canvas_vp} {foda_input}"
+                st.session_state.paso = 2
+                st.rerun()
+            else:
+                st.error("Por favor ingresa el nombre de la empresa.")
 
 elif st.session_state.paso == 2:
-    st.title("Fase 2: Estrategia Play to Win")
-    with st.form("f2"):
-        st.session_state.donde = st.text_input("¿Dónde jugar?")
-        st.session_state.como = st.text_input("¿Cómo ganar?")
+    st.title("Fase 2: Definición de Estrategia")
+    with st.form("estrategia_form"):
+        donde = st.text_input("¿Dónde jugar?")
+        como = st.text_input("¿Cómo ganar?")
         if st.form_submit_button("Iniciar Simulador"):
+            st.session_state.donde = donde
+            st.session_state.como = como
             st.session_state.paso = 3
             st.rerun()
 
 elif st.session_state.paso == 3:
-    st.title(f"Simulador: {st.session_state.empresa}")
+    st.title(f"Tablero de Control: {st.session_state.empresa}")
+    
     col_vis, col_ctrl = st.columns([2, 1])
 
     with col_vis:
-        t_matriz, t_gap, t_radar, t_hist = st.tabs(["📋 Matriz BSC", "📊 Gaps", "🕸 Radar", "📜 Historial"])
+        t_matriz, t_gap, t_hist = st.tabs(["📋 Matriz BSC", "📊 Gaps", "📜 Historial"])
         
-        # Generar datos para tablas y gráficos
-        labels, vals, targets, rows = [], [], [], []
-        for p, k_dict in st.session_state.kpis.items():
-            for k, d in k_dict.items():
+        # Preparar Datos
+        rows = []
+        labels, vals, targets = [], [], []
+        for p, kpis in st.session_state.kpis.items():
+            for k, d in kpis.items():
                 labels.append(k)
                 vals.append(d['actual'])
                 targets.append(d['ideal'])
                 status = "🟢" if d['actual'] >= d['ideal'] else "🟡" if d['actual'] >= (d['ideal']*0.8) else "🔴"
                 rows.append({"Estado": status, "Perspectiva": p, "KPI": k, "Actual": d['actual'], "Meta": d['ideal']})
         
-        with t_matriz: st.table(pd.DataFrame(rows))
+        with t_matriz:
+            st.table(pd.DataFrame(rows))
         with t_gap:
             fig, ax = plt.subplots(figsize=(10, 4))
-            ax.bar(np.arange(len(labels))-0.2, vals, 0.4, label="Actual")
-            ax.bar(np.arange(len(labels))+0.2, targets, 0.4, alpha=0.3, label="Meta")
-            ax.set_xticks(np.arange(len(labels))); ax.set_xticklabels(labels, rotation=45)
+            x = np.arange(len(labels))
+            ax.bar(x - 0.2, vals, 0.4, label='Actual', color='#007bff')
+            ax.bar(x + 0.2, targets, 0.4, label='Meta', color='#e9ecef')
+            ax.set_xticks(x)
+            ax.set_xticklabels(labels, rotation=45)
+            ax.legend()
             st.pyplot(fig)
-        with t_radar:
-            # Lógica simplificada de radar
-            st.write("Visualización Radar activa.")
-        with t_hist: st.table(pd.DataFrame(st.session_state.historial)) if st.session_state.historial else st.write("Sin datos.")
+        with t_hist:
+            if st.session_state.historial:
+                st.table(pd.DataFrame(st.session_state.historial))
+            else:
+                st.info("No hay decisiones registradas.")
 
     with col_ctrl:
-        st.subheader("Panel de Decisiones")
+        st.subheader("Simulación")
         st.metric("Presupuesto", f"${round(st.session_state.presupuesto, 2)}M")
-        sel = st.selectbox("Acción:", list(DECISIONES.keys()))
         
-        if st.button("Invertir", use_container_width=True):
-            info = DECISIONES[sel]
+        seleccion = st.selectbox("Elegir Iniciativa:", list(DECISIONES.keys()))
+        
+        if st.button("Ejecutar Inversión", use_container_width=True):
+            info = DECISIONES[seleccion]
             if st.session_state.presupuesto >= info['costo']:
-                mod = calcular_modificador(st.session_state.diagnostico_texto, sel)
+                mod = calcular_modificador(st.session_state.diagnostico_texto, seleccion)
                 st.session_state.presupuesto -= info['costo']
                 
-                cambios = []
-                for p, kpis in info['impacto'].items():
-                    for k, v in kpis.items():
-                        v_final = v * mod # Aplicación del modificador por coherencia
-                        st.session_state.kpis[p][k]['actual'] = round(st.session_state.kpis[p][k]['actual'] + v_final, 2)
-                        cambios.append({"KPI": k, "Impacto": f"{'+' if v_final>0 else ''}{v_final} ({'Bono Coherencia' if mod > 1 else 'Normal'})"})
+                detalles_impacto = []
+                for p, k_impacts in info['impacto'].items():
+                    for kpi_nom, val in k_impacts.items():
+                        v_final = round(val * mod, 2)
+                        st.session_state.kpis[p][kpi_nom]['actual'] += v_final
+                        detalles_impacto.append({"KPI": kpi_nom, "Impacto": f"+{v_final}" if v_final > 0 else f"{v_final}"})
                 
-                st.session_state.ultimo_impacto = cambios
-                st.session_state.historial.append({"Acción": sel, "Costo": info['costo'], "Coherencia": "Alta" if mod > 1 else "Estándar"})
+                st.session_state.ultimo_impacto = detalles_impacto
+                st.session_state.historial.append({"Iniciativa": seleccion, "Costo": info['costo'], "Coherencia": "Alta (Bono)" if mod > 1 else "Normal"})
                 st.rerun()
-        
+            else:
+                st.error("Presupuesto insuficiente")
+
         if st.session_state.ultimo_impacto:
-            st.write("**Último Impacto:**")
+            st.write("---")
+            st.write("**Impacto de la última decisión:**")
             st.dataframe(pd.DataFrame(st.session_state.ultimo_impacto), hide_index=True)
 
         st.divider()
-        if st.button("📊 GENERAR REPORTE", type="primary", use_container_width=True):
+        if st.button("📊 GENERAR REPORTE FINAL", type="primary", use_container_width=True):
             st.session_state.paso = 4
+            st.rerun()
+            
+        if st.button("🔄 Reiniciar Simulación", use_container_width=True):
+            for key in list(st.session_state.keys()):
+                del st.session_state[key]
             st.rerun()
 
 elif st.session_state.paso == 4:
-    st.title("Reporte Final de Estrategia")
-    st.header(f"Resultados para {st.session_state.empresa}")
+    st.title("Reporte Estratégico Final")
+    st.header(f"Resultados: {st.session_state.empresa}")
     
-    c1, c2 = st.columns(2)
-    with c1:
-        st.subheader("Datos de Entrada")
-        st.write(f"**Diagnóstico detectado:** {st.session_state.diagnostico_texto[:200]}...")
-        st.write(f"**Estrategia:** {st.session_state.como}")
-    with c2:
-        st.subheader("Eficiencia Financiera")
-        st.write(f"**Presupuesto Final:** ${round(st.session_state.presupuesto, 2)}M")
-        puntos_logrados = sum(1 for p, k in st.session_state.kpis.items() for kpi, d in k.items() if d['actual'] >= d['ideal'])
-        st.metric("Objetivos Cumplidos", f"{puntos_logrados} / 8")
-
-    st.subheader("Historial de Coherencia")
+    st.subheader("1. Diagnóstico y Estrategia")
+    st.write(f"**Estrategia:** {st.session_state.como} en {st.session_state.donde}")
+    
+    st.subheader("2. KPIs Finales")
+    final_rows = []
+    for p, kpis in st.session_state.kpis.items():
+        for k, d in kpis.items():
+            final_rows.append({"Perspectiva": p, "KPI": k, "Resultado": d['actual'], "Meta": d['ideal']})
+    st.table(pd.DataFrame(final_rows))
+    
+    st.subheader("3. Bitácora de Inversiones")
     st.table(pd.DataFrame(st.session_state.historial))
     
-    if st.button("Reiniciar Simulador"):
-        st.session_state.clear()
+    if st.button("Volver al Simulador"):
+        st.session_state.paso = 3
         st.rerun()
