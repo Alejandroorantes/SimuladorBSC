@@ -1,17 +1,11 @@
-import sys
-import subprocess
-
-# Instalar dependencias si faltan
-try:
-    import matplotlib
-except ImportError:
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
-
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import copy
+
+# Configuración de página - Debe ser la primera instrucción de Streamlit
+st.set_page_config(page_title="Simulador Estratégico BSC", layout="wide")
 
 # --- DATOS GLOBAL: DECISIONES ---
 if 'DECISIONES' not in st.session_state:
@@ -73,53 +67,37 @@ if 'kpis' not in st.session_state:
 if 'resumen_impacto' not in st.session_state:
     st.session_state.resumen_impacto = None
 
-# --- INICIALIZACIÓN DE VARIABLES FALTANTES ---
-if 'empresa' not in st.session_state:
-    st.session_state.empresa = ""
-if 'industria' not in st.session_state:
-    st.session_state.industria = ""
-if 'donde' not in st.session_state:
-    st.session_state.donde = ""
-if 'como' not in st.session_state:
-    st.session_state.como = ""
-
 # --- FUNCIONES DE APOYO ---
 def aplicar_decision(d_id):
     decision = st.session_state.DECISIONES[d_id]
     if st.session_state.presupuesto >= decision['costo']:
-        # Guardar estado previo para el resumen
         before = copy.deepcopy(st.session_state.kpis)
         st.session_state.presupuesto -= decision['costo']
         
-        # Aplicar impacto
         for cat, impacts in decision['impacto'].items():
             for kpi, val in impacts.items():
                 st.session_state.kpis[cat][kpi]['actual'] = round(st.session_state.kpis[cat][kpi]['actual'] + val, 2)
         
-        st.session_state.resumen_impacto = {"nombre": decision['nombre'], "costo": decision['costo'], "before": before}
+        st.session_state.resumen_impacto = {"nombre": decision['nombre'], "costo": decision['costo']}
+        st.success(f"¡Decisión '{decision['nombre']}' aplicada con éxito!")
     else:
-        st.error("Presupuesto insuficiente")
+        st.error("Presupuesto insuficiente para esta acción.")
 
 # --- INTERFAZ ---
-
-# PASO 1 Y 2: DIAGNÓSTICO (En la barra lateral)
 with st.sidebar:
     st.header("📝 Diagnóstico Estratégico")
     if st.session_state.paso == 1:
-        st.session_state.empresa = st.text_input("Empresa:", st.session_state.empresa)
+        st.session_state.empresa = st.text_input("Empresa:", "Empresa Global")
         st.session_state.industria = st.selectbox("Industria:", ['Manufactura/CPG', 'Servicios', 'Tecnología', 'Retail'])
-        st.text_area("Canvas (VP):")
-        st.text_area("Cadena Valor:")
-        st.text_area("FODA/PESTEL:")
+        st.text_area("Canvas (VP):", placeholder="Describe tu propuesta de valor...")
         if st.button("Siguiente: Play to Win"):
             st.session_state.paso = 2
             st.rerun()
     
     elif st.session_state.paso == 2:
-        st.subheader("Play to Win")
-        st.session_state.donde = st.text_input("¿Dónde jugar?", st.session_state.donde)
-        st.session_state.como = st.text_input("¿Cómo ganar?", st.session_state.como)
-        st.text_area("Capacidades:")
+        st.subheader("Fase: Play to Win")
+        st.session_state.donde = st.text_input("¿Dónde jugar?", placeholder="Mercados, canales...")
+        st.session_state.como = st.text_input("¿Cómo ganar?", placeholder="Estrategia de diferenciación...")
         if st.button("Generar Simulador"):
             st.session_state.paso = 3
             st.rerun()
@@ -127,99 +105,70 @@ with st.sidebar:
             st.session_state.paso = 1
             st.rerun()
 
-# PASO 3: EL SIMULADOR (Panel Principal)
+# PANEL PRINCIPAL (Simulador)
 if st.session_state.paso == 3:
     st.title(f"Tablero de Control: {st.session_state.empresa}")
-    st.markdown(f"**Estrategia:** Ganaremos en *{st.session_state.donde}* mediante *{st.session_state.como}*")
+    st.info(f"**Estrategia:** Ganaremos en *{st.session_state.donde}* mediante *{st.session_state.como}*")
     
-    col_kpi, col_dec = st.columns([2, 1])
+    col_visual, col_control = st.columns([2, 1])
 
-    with col_kpi:
-        st.subheader("Visualización del BSC")
-        vistas = st.tabs(["📋 Matriz", "📊 Barras (Gap)", "🕸 Radar"])
+    with col_visual:
+        tab_matriz, tab_gap, tab_radar = st.tabs(["📋 Matriz BSC", "📊 Análisis de Brechas", "🕸 Radar de Balance"])
         
-        # Recopilar datos para tablas/gráficos
-        data_rows = []
+        # Preparación de datos comunes
         labels, vals, targets = [], [], []
+        data_rows = []
         for p, kpis in st.session_state.kpis.items():
             for k, d in kpis.items():
-                data_rows.append({"Perspectiva": p, "KPI": k, "Actual": d['actual'], "Ideal": d['ideal'], "Unidad": d['unit']})
+                data_rows.append({"Perspectiva": p, "KPI": k, "Actual": d['actual'], "Ideal": d['ideal'], "Und": d['unit']})
                 labels.append(k)
                 vals.append(d['actual'])
                 targets.append(d['ideal'])
 
-        with vistas[0]:
+        with tab_matriz:
             st.table(pd.DataFrame(data_rows))
-        
-        with vistas[1]:
-            fig, ax = plt.subplots(figsize=(10, 5))
-            x = np.arange(len(labels))
-            ax.bar(x - 0.2, vals, 0.4, label='Actual', color='skyblue')
-            ax.bar(x + 0.2, targets, 0.4, label='Ideal', color='lightcoral', alpha=0.7)
-            ax.set_xticks(x)
-            ax.set_xticklabels(labels, rotation=45, ha='right')
-            ax.legend()
-            ax.set_ylabel('Valor')
-            ax.set_title('KPIs: Actual vs Ideal')
-            st.pyplot(fig)
-            plt.close()
 
-        with vistas[2]:
-            # Lógica de Radar
+        with tab_gap:
+            fig_gap, ax_gap = plt.subplots(figsize=(10, 5))
+            x = np.arange(len(labels))
+            ax_gap.bar(x - 0.2, vals, 0.4, label='Estado Actual', color='#1E88E5')
+            ax_gap.bar(x + 0.2, targets, 0.4, label='Meta Ideal', color='#E53935', alpha=0.3)
+            ax_gap.set_xticks(x)
+            ax_gap.set_xticklabels(labels, rotation=45, ha='right')
+            ax_gap.legend()
+            st.pyplot(fig_gap)
+
+        with tab_radar:
             N = len(labels)
             angles = [n / float(N) * 2 * np.pi for n in range(N)]
             angles += angles[:1]
             v_radar = vals + vals[:1]
             t_radar = targets + targets[:1]
             
-            fig_rad = plt.figure(figsize=(6,6))
-            ax_rad = plt.subplot(111, polar=True)
-            ax_rad.plot(angles, t_radar, 'r', alpha=0.3, label="Ideal")
-            ax_rad.fill(angles, t_radar, 'r', alpha=0.1)
-            ax_rad.plot(angles, v_radar, 'b', label="Actual")
-            ax_rad.fill(angles, v_radar, 'b', alpha=0.2)
+            fig_rad, ax_rad = plt.subplots(figsize=(6,6), subplot_kw=dict(polar=True))
+            ax_rad.plot(angles, t_radar, color='red', linestyle='dashed', alpha=0.4, label="Meta")
+            ax_rad.fill(angles, t_radar, color='red', alpha=0.1)
+            ax_rad.plot(angles, v_radar, color='blue', linewidth=2, label="Actual")
+            ax_rad.fill(angles, v_radar, color='blue', alpha=0.2)
             ax_rad.set_xticks(angles[:-1])
-            ax_rad.set_xticklabels(labels, fontsize=8)
-            ax_rad.legend(loc='upper right', bbox_to_anchor=(1.3, 1.1))
+            ax_rad.set_xticklabels(labels)
             st.pyplot(fig_rad)
-            plt.close()
 
-    with col_dec:
-        st.subheader("Decisiones")
-        st.metric("Presupuesto Disponible", f"${st.session_state.presupuesto}M")
+    with col_control:
+        st.subheader("Decision Making")
+        st.metric("Presupuesto USD", f"${st.session_state.presupuesto}M")
         
         opciones = {d['nombre']: k for k, d in st.session_state.DECISIONES.items()}
-        seleccion = st.selectbox("Seleccionar Acción:", options=list(opciones.keys()))
+        seleccion = st.selectbox("Elegir Iniciativa:", options=list(opciones.keys()))
         
-        if st.button("Aplicar Decisión Strategic", use_container_width=True):
+        if st.button("Ejecutar Acción", use_container_width=True):
             aplicar_decision(opciones[seleccion])
             st.rerun()
             
-        if st.button("🔄 Resetear Todo", type="secondary"):
-            st.session_state.kpis = copy.deepcopy(st.session_state.initial_kpis)
-            st.session_state.presupuesto = 20.0
-            st.session_state.resumen_impacto = None
+        st.divider()
+        if st.button("🔄 Reiniciar Todo", type="secondary", use_container_width=True):
+            st.session_state.clear()
             st.rerun()
 
-    # RESUMEN DE IMPACTO (Debajo de todo)
     if st.session_state.resumen_impacto:
-        st.divider()
-        res = st.session_state.resumen_impacto
-        st.info(f"**Último Impacto:** {res['nombre']} (Costo: ${res['costo']}M)")
-        
-        # Tabla comparativa del cambio
-        cambios = []
-        for cat in res['before']:
-            for kpi in res['before'][cat]:
-                before_val = res['before'][cat][kpi]['actual']
-                after_val = st.session_state.kpis[cat][kpi]['actual']
-                cambio = after_val - before_val
-                cambios.append({
-                    "Perspectiva": cat,
-                    "KPI": kpi,
-                    "Antes": before_val,
-                    "Después": after_val,
-                    "Cambio": f"+{cambio}" if cambio > 0 else f"{cambio}"
-                })
-        
-        st.dataframe(pd.DataFrame(cambios), use_container_width=True)
+        st.toast(f"Última acción: {st.session_state.resumen_impacto['nombre']}")
