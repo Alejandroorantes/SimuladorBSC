@@ -63,43 +63,49 @@ DECISIONES = {
 
 # --- NAVEGACIÓN ---
 
-# FASE 1: DIAGNÓSTICO ACTUALIZADO
+# FASE 1: DIAGNÓSTICO ESTRUCTURADO (CANVAS + FODA)
 if st.session_state.paso == 1:
-    st.title("Fase 1: Diagnóstico de Operaciones y Valor")
+    st.title("Fase 1: Diagnóstico Integral de Negocio")
     with st.form("diagnostico_form"):
         col_id1, col_id2 = st.columns(2)
         with col_id1:
-            empresa_input = st.text_input("Nombre de la Empresa:")
+            empresa_input = st.text_input("Nombre de la Organización:")
         with col_id2:
             industria = st.selectbox("Industria:", ["Manufactura", "Servicios", "Tecnología", "Retail"])
         
-        st.subheader("Configuración del Modelo Operativo")
+        st.subheader("I. Arquitectura de Negocio")
         c1, c2 = st.columns(2)
         with c1:
-            vp = st.text_area("Propuesta de Valor:", placeholder="¿Qué beneficio entregamos al cliente?")
-            proc = st.text_area("Procesos Clave:", placeholder="Actividades críticas para operar")
+            vp = st.text_area("Propuesta de Valor:", placeholder="¿Qué valor entregamos?")
+            proc = st.text_area("Procesos Clave:", placeholder="Actividades operativas críticas")
         with c2:
-            recursos = st.text_area("Recursos Clave:", placeholder="Activos, tecnología y talento humano")
-            socios = st.text_area("Socios Clave:", placeholder="Aliados, proveedores y partners")
+            recursos = st.text_area("Recursos Clave:", placeholder="Talento, Tecnología, Infraestructura")
+            socios = st.text_area("Socios Clave:", placeholder="Proveedores y Aliados estratégicos")
             
-        st.subheader("Análisis FODA")
-        foda_input = st.text_area("Análisis FODA (Resumen):", placeholder="Fortalezas, Oportunidades, Debilidades y Amenazas")
+        st.subheader("II. Análisis FODA Estructurado")
+        f1, f2 = st.columns(2)
+        with f1:
+            fort = st.text_area("Fortalezas (Interno):", placeholder="Capacidades y ventajas competitivas")
+            opp = st.text_area("Oportunidades (Externo):", placeholder="Tendencias y mercados a explotar")
+        with f2:
+            deb = st.text_area("Debilidades (Interno):", placeholder="Puntos de mejora y carencias")
+            ame = st.text_area("Amenazas (Externo):", placeholder="Riesgos del entorno y competencia")
         
         if st.form_submit_button("Siguiente: Definir Estrategia"):
             if empresa_input:
                 st.session_state.empresa = empresa_input
-                # Consolidamos todo el texto para que el motor de coherencia analice todas las áreas
-                st.session_state.diagnostico_texto = f"{vp} {proc} {recursos} {socios} {foda_input}"
+                # Consolidación total para el motor de coherencia
+                st.session_state.diagnostico_texto = f"{vp} {proc} {recursos} {socios} {fort} {opp} {deb} {ame}"
                 st.session_state.paso = 2
                 st.rerun()
             else:
                 st.error("Por favor ingresa el nombre de la empresa.")
 
 elif st.session_state.paso == 2:
-    st.title("Fase 2: Definición de Estrategia")
+    st.title("Fase 2: Estrategia Play to Win")
     with st.form("estrategia_form"):
-        donde = st.text_input("¿Dónde jugar?", placeholder="Mercados, Canales, Clientes")
-        como = st.text_input("¿Cómo ganar?", placeholder="Diferenciación, Liderazgo en Costos, Nicho")
+        donde = st.text_input("¿Dónde jugar?", placeholder="Geografías, Segmentos, Canales")
+        como = st.text_input("¿Cómo ganar?", placeholder="Ventaja competitiva y propuesta única")
         if st.form_submit_button("Iniciar Simulador"):
             st.session_state.donde = donde
             st.session_state.como = como
@@ -140,7 +146,7 @@ elif st.session_state.paso == 3:
             if st.session_state.historial:
                 st.table(pd.DataFrame(st.session_state.historial))
             else:
-                st.info("No hay decisiones registradas.")
+                st.info("No hay inversiones registradas.")
 
     with col_ctrl:
         st.subheader("Simulación")
