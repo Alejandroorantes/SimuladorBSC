@@ -4,15 +4,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import copy
 
-# Configuración inicial
-st.set_page_config(page_title="Simulador de Estrategia Digital y Negocios", layout="wide")
+# Configuración inicial de la página
+st.set_page_config(page_title="Simulador Estratégico Alex", layout="wide")
 
-# --- ESTADO DE SESIÓN (Persistencia de datos) ---
+# --- INICIALIZACIÓN DE ESTADO DE SESIÓN ---
 if 'paso' not in st.session_state:
     st.session_state.paso = 1
     st.session_state.presupuesto = 20.0
-    st.session_state.historial = []
-    st.session_state.diagnostico = {}
     st.session_state.kpis = {
         "Financiera": {
             "ROI": {"actual": 8.0, "ideal": 15.0, "unit": "%"},
@@ -31,138 +29,119 @@ if 'paso' not in st.session_state:
             "Capacitación": {"actual": 20.0, "ideal": 55.0, "unit": "hrs"}
         }
     }
+    st.session_state.initial_kpis = copy.deepcopy(st.session_state.kpis)
 
+# Definición de Decisiones
 DECISIONES = {
-    "Transformación Digital Core": {"costo": 7.0, "impacto": {"Procesos": {"Eficiencia OEE": 15, "Tiempo Ciclo": -4}, "Aprendizaje": {"Índice Innovación": 2}}},
-    "Marketing Automation & CRM": {"costo": 4.0, "impacto": {"Clientes": {"Satisfacción (NPS)": 12, "Cuota Mercado": 5}, "Financiera": {"ROI": 1}}},
-    "Ciberseguridad y Resiliencia": {"costo": 3.0, "impacto": {"Procesos": {"Eficiencia OEE": 5}, "Financiera": {"Margen EBITDA": -1}}},
-    "Upskilling Talento Tech": {"costo": 2.5, "impacto": {"Aprendizaje": {"Capacitación": 25, "Índice Innovación": 3}, "Procesos": {"Eficiencia OEE": 3}}},
-    "Expansión E-commerce Global": {"costo": 6.0, "impacto": {"Clientes": {"Cuota Mercado": 8}, "Financiera": {"ROI": 3, "Margen EBITDA": 2}}}
+    "Automatización Industrial": {"costo": 5.0, "impacto": {"Procesos": {"Eficiencia OEE": 12.0}, "Financiera": {"Margen EBITDA": 2.5}}},
+    "Programa de Lealtad Digital": {"costo": 3.0, "impacto": {"Clientes": {"Satisfacción (NPS)": 15.0, "Cuota Mercado": 4.0}}},
+    "Capacitación Agile & Lean": {"costo": 2.0, "impacto": {"Aprendizaje": {"Capacitación": 20.0}, "Procesos": {"Eficiencia OEE": 5.0}}}
 }
 
-# --- FUNCIONES ---
-def aplicar_cambio(nombre_accion):
-    accion = DECISIONES[nombre_accion]
-    if st.session_state.presupuesto >= accion['costo']:
-        cambios = []
-        st.session_state.presupuesto -= accion['costo']
-        for cat, kpis in accion['impacto'].items():
-            for kpi, val in kpis.items():
-                st.session_state.kpis[cat][kpi]['actual'] += val
-                cambios.append(f"{kpi}: {'+' if val>0 else ''}{val}")
-        
-        st.session_state.historial.append({
-            "Acción": nombre_accion,
-            "Costo": f"${accion['costo']}M",
-            "Impacto": ", ".join(cambios)
-        })
-        st.success(f"Ejecutado: {nombre_accion}")
-    else:
-        st.error("Presupuesto insuficiente")
+# --- NAVEGACIÓN Y FLUJO ---
 
-# --- NAVEGACIÓN ---
+# PASO 1: DIAGNÓSTICO (EMPRESA, CANVAS Y FODA)
 if st.session_state.paso == 1:
-    st.title("🛡️ Fase 1: Diagnóstico de Modelo de Negocio")
-    with st.form("f1"):
+    st.title("Fase 1: Diagnóstico y Análisis")
+    with st.form("form_diagnostico"):
+        st.session_state.empresa = st.text_input("Nombre de la Empresa:", "")
+        st.session_state.industria = st.selectbox("Industria:", ['Manufactura/CPG', 'Servicios', 'Tecnología', 'Retail'])
+        
+        st.subheader("Business Model Canvas")
+        st.session_area_canvas = st.text_area("Propuesta de Valor Clave:", placeholder="¿Qué valor entregamos?")
+        
+        st.subheader("Análisis FODA")
         col1, col2 = st.columns(2)
         with col1:
-            st.subheader("Business Model Canvas")
-            st.session_state.diagnostico['empresa'] = st.text_input("Nombre de la Organización", "Mi Empresa")
-            st.session_state.diagnostico['vp'] = st.text_area("Propuesta de Valor (¿Qué nos hace únicos?)")
-            st.session_state.diagnostico['segmentos'] = st.text_area("Segmentos de Cliente")
+            st.text_area("Fortalezas:", placeholder="Puntos fuertes internos")
+            st.text_area("Oportunidades:", placeholder="Factores externos positivos")
         with col2:
-            st.subheader("Análisis FODA")
-            st.session_state.diagnostico['fortalezas'] = st.text_area("Fortalezas y Oportunidades")
-            st.session_state.diagnostico['debilidades'] = st.text_area("Debilidades y Amenazas")
-        
-        if st.form_submit_button("Siguiente: Definir Estrategia"):
-            st.session_state.paso = 2
-            st.rerun()
+            st.text_area("Debilidades:", placeholder="Puntos a mejorar internos")
+            st.text_area("Amenazas:", placeholder="Riesgos externos")
+            
+        if st.form_submit_button("Siguiente: Play to Win"):
+            if st.session_state.empresa:
+                st.session_state.paso = 2
+                st.rerun()
+            else:
+                st.warning("Por favor, ingresa el nombre de la empresa.")
 
+# PASO 2: PLAY TO WIN
 elif st.session_state.paso == 2:
-    st.title("🎯 Fase 2: Play to Win")
-    with st.form("f2"):
-        st.session_state.diagnostico['donde'] = st.text_input("¿Dónde jugar? (Mercado, Geografía, Canales)")
-        st.session_state.diagnostico['como'] = st.text_input("¿Cómo ganar? (Estrategia de diferenciación o costos)")
-        st.session_state.diagnostico['capacidades'] = st.text_area("Capacidades necesarias (Sistemas, Talento)")
+    st.title("Fase 2: Play to Win (Estrategia)")
+    with st.form("form_play"):
+        st.session_state.donde = st.text_input("¿Dónde jugar?", placeholder="Mercado, Clientes, Canales")
+        st.session_state.como = st.text_input("¿Cómo ganar?", placeholder="Ventaja competitiva")
+        st.text_area("Capacidades Requeridas:", placeholder="Sistemas y talento")
         
-        if st.form_submit_button("Generar Simulador y BSC"):
+        if st.form_submit_button("Generar Simulador"):
             st.session_state.paso = 3
             st.rerun()
+        if st.form_submit_button("Volver al Diagnóstico"):
+            st.session_state.paso = 1
+            st.rerun()
 
+# PASO 3: SIMULADOR COMPLETO
 elif st.session_state.paso == 3:
-    st.title(f"🚀 Tablero Estratégico: {st.session_state.diagnostico['empresa']}")
+    st.title(f"Tablero de Control: {st.session_state.empresa}")
+    st.markdown(f"**Estrategia:** {st.session_state.como} en {st.session_state.donde}")
     
-    # Resumen Estratégico (Header)
-    with st.expander("📄 Ver Resumen Estratégico Completo", expanded=False):
-        c1, c2, c3 = st.columns(3)
-        c1.markdown(f"**Propuesta:** {st.session_state.diagnostico['vp']}")
-        c2.markdown(f"**Dónde Jugar:** {st.session_state.diagnostico['donde']}")
-        c3.markdown(f"**Cómo Ganar:** {st.session_state.diagnostico['como']}")
+    col_vis, col_ctrl = st.columns([2, 1])
 
-    col_main, col_side = st.columns([2, 1])
-
-    with col_main:
-        tabs = st.tabs(["📋 Matriz BSC", "📊 Comparativa Gaps", "🕸 Radar Balance", "📜 Historial de Impacto"])
+    with col_vis:
+        tab_matriz, tab_gap, tab_radar = st.tabs(["📋 Matriz BSC", "📊 Barras (Gap)", "🕸 Radar"])
         
-        # Preparación de datos
-        labels, vals, goals = [], [], []
-        bsc_data = []
-        for cat, kpis in st.session_state.kpis.items():
+        # Datos para visualización
+        labels, vals, targets, bsc_rows = [], [], [], []
+        for p, kpis in st.session_state.kpis.items():
             for k, d in kpis.items():
                 labels.append(k)
                 vals.append(d['actual'])
-                goals.append(d['ideal'])
-                # Lógica de semáforo
-                status = "🟢" if d['actual'] >= d['ideal'] else "🟡" if d['actual'] >= (d['ideal']*0.8) else "🔴"
-                bsc_data.append([status, cat, k, d['actual'], d['ideal'], d['unit']])
+                targets.append(d['ideal'])
+                bsc_rows.append({"Perspectiva": p, "KPI": k, "Actual": d['actual'], "Meta": d['ideal'], "Unidad": d['unit']})
+        
+        with tab_matriz:
+            st.table(pd.DataFrame(bsc_rows))
 
-        with tabs[0]:
-            st.subheader("Balanced Scorecard (Matriz)")
-            df_bsc = pd.DataFrame(bsc_data, columns=["Estado", "Perspectiva", "Indicador", "Actual", "Meta", "Unidad"])
-            st.table(df_bsc)
-
-        with tabs[1]:
-            fig, ax = plt.subplots(figsize=(10, 5))
+        with tab_gap:
+            fig, ax = plt.subplots(figsize=(10, 4))
             x = np.arange(len(labels))
-            ax.bar(x - 0.2, vals, 0.4, label='Actual', color='#007bff')
-            ax.bar(x + 0.2, goals, 0.4, label='Meta', color='#cccccc', alpha=0.5)
+            ax.bar(x - 0.2, vals, 0.4, label='Actual', color='#1E88E5')
+            ax.bar(x + 0.2, targets, 0.4, label='Meta', color='#CFD8DC')
             ax.set_xticks(x)
             ax.set_xticklabels(labels, rotation=45)
             ax.legend()
             st.pyplot(fig)
 
-        with tabs[2]:
+        with tab_radar:
             N = len(labels)
             angles = [n / float(N) * 2 * np.pi for n in range(N)]
             angles += angles[:1]
             fig_r, ax_r = plt.subplots(subplot_kw=dict(polar=True))
-            ax_r.plot(angles, goals + goals[:1], 'r--', alpha=0.3, label="Ideal")
-            ax_r.plot(angles, vals + vals[:1], 'b-', linewidth=2, label="Actual")
-            ax_r.fill(angles, vals + vals[:1], 'b', alpha=0.1)
+            ax_r.plot(angles, targets + targets[:1], 'r--', alpha=0.3)
+            ax_r.plot(angles, vals + vals[:1], 'b-')
             ax_r.set_xticks(angles[:-1])
             ax_r.set_xticklabels(labels)
             st.pyplot(fig_r)
 
-        with tabs[3]:
-            if st.session_state.historial:
-                st.table(pd.DataFrame(st.session_state.historial))
+    with col_ctrl:
+        st.subheader("Decisiones")
+        st.metric("Presupuesto", f"${st.session_state.presupuesto}M")
+        
+        opcion = st.selectbox("Seleccionar Acción:", list(DECISIONES.keys()))
+        info = DECISIONES[opcion]
+        
+        if st.button("Aplicar Inversión", use_container_width=True):
+            if st.session_state.presupuesto >= info['costo']:
+                st.session_state.presupuesto -= info['costo']
+                for p, impacts in info['impacto'].items():
+                    for k, v in impacts.items():
+                        st.session_state.kpis[p][k]['actual'] += v
+                st.success(f"Aplicado: {opcion}")
+                st.rerun()
             else:
-                st.write("No se han tomado decisiones aún.")
+                st.error("Presupuesto insuficiente")
 
-    with col_side:
-        st.subheader("Panel de Decisiones")
-        st.metric("Presupuesto Disponible", f"${st.session_state.presupuesto}M")
-        
-        sel = st.selectbox("Seleccione Iniciativa:", list(DECISIONES.keys()))
-        costo = DECISIONES[sel]['costo']
-        st.write(f"**Inversión requerida:** ${costo}M")
-        
-        if st.button("Ejecutar Inversión", use_container_width=True):
-            aplicar_cambio(sel)
-            st.rerun()
-
-        st.divider()
-        if st.button("🔄 Reiniciar Simulación", type="secondary"):
+        if st.button("🔄 Reiniciar"):
             st.session_state.clear()
             st.rerun()
