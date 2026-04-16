@@ -1,3 +1,17 @@
+import sys
+import subprocess
+
+# Instalar dependencias si faltan
+try:
+    import matplotlib
+except ImportError:
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
+
+import streamlit as st
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+import copy
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
