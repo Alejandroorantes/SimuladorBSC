@@ -73,7 +73,7 @@ if st.session_state.paso == 1:
         with col_id1:
             empresa_input = st.text_input("Nombre de la Organización:")
         with col_id2:
-            industria_input = st.selectbox("Industria:", ["Manufactura", "Servicios", "Tecnología", "Retail"])
+            industria_input = st.selectbox("Industria:", ["Manufactura", "Servicios", "Bancario","Agroindustria","Alimentos y Bebidas","Tecnología", "Retail"])
         
         st.subheader("I. Arquitectura de Negocio (Canvas)")
         c1, c2 = st.columns(2)
