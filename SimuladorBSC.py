@@ -68,6 +68,7 @@ DECISIONES = {
 if st.session_state.paso == 1:
     st.markdown("<h1 style='text-align: center; color: #1E3A8A; font-size: 50px;'>Simulador de Estrategia de negocios</h1>", unsafe_allow_html=True)
     st.markdown("<h3 style='text-align: center; color: #1E3A8A; font-size: 20px;'>Creado por: Dr. Alejandro Orantes Kestler</h1>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align: left; color: #1E3A8A; font-size: 20px;'>Instrucciones: este simulador fue elaborado para que los estudiantes diseñen una estrategia y luego simular la toma de decisiones y que se comprenda el impacto que tiene cada decision</h1>", unsafe_allow_html=True)
     st.header("Fase 1: Diagnóstico Integral de Negocio")
     with st.form("diagnostico_form"):
         col_id1, col_id2 = st.columns(2)
