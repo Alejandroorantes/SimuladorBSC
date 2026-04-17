@@ -114,9 +114,11 @@ elif st.session_state.paso == 2:
     with st.form("estrategia_form"):
         donde = st.text_input("¿Dónde jugar?")
         como = st.text_input("¿Cómo ganar?")
+        que = st.text_input("¿Qué capacidades deben estar presentes?")
         if st.form_submit_button("Iniciar Simulador"):
             st.session_state.donde = donde
             st.session_state.como = como
+            st.session_state.como = que
             st.session_state.paso = 3
             st.rerun()
 
