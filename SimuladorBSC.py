@@ -47,10 +47,12 @@ def obtener_recomendacion_ia(datos, estrategia):
     TAREA: Da un feedback breve sobre la coherencia y menciona 2 puntos ciegos.
     """
     try:
+        # Intentamos generar el contenido
         response = model.generate_content(prompt)
         return response.text
-    except:
-        return "La IA no está disponible en este momento. Revisa tu API KEY."
+    except Exception as e:
+        # ESTO ES LO IMPORTANTE: Nos dirá el error real (ej. Invalid API Key, Quota Exceeded, etc.)
+        return f"⚠️ Error técnico real: {str(e)}"
 
 # ==========================================
 # 2. INICIALIZACIÓN DE ESTADO
