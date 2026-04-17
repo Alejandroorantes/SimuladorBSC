@@ -215,7 +215,7 @@ elif st.session_state.paso == 4:
     st.markdown("---")
     st.subheader("III. Estrategia y Resultados Obtenidos")
     # Propuesta Integrada de los 3 elementos
-    st.success(f"**Estrategia:** Nuestra Aspiración es {st.session_state.aspiracion}  {st.session_state.como} en {st.session_state.donde} apalancado en {st.session_state.que}")
+    st.success(f"**Estrategia:** Nuestra Aspiración es {st.session_state.aspiracion} enfocandonos en {st.session_state.donde} mediante {st.session_state.donde} apalancado en {st.session_state.que}")
     
     # KPIs Finales
     final_rows = []
