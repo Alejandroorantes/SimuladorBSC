@@ -76,21 +76,33 @@ DECISIONES = {
 if st.session_state.paso == 1:
     st.markdown("<h1>Simulador de Estrategia de negocios</h1>", unsafe_allow_html=True)
     st.markdown("<h3 style='text-align: center; font-size: 30px;'>Creado por: Dr. Alejandro Orantes Kestler</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align: left; color: #1E3A8A; font-size: 20px;'>Objetivo: este simulador fue elaborado para que los estudiantes diseñen una estrategia y luego simular la toma de decisiones y que se comprenda el impacto que tiene cada decisión.</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align: left; color: #1E3A8A; font-size: 20px;'>Instrucciones: seleccione una empresa que conozca e intente llenar la mayor cantidad de informacion que conozca sobre la empresa y esto permitirá que el programa le recomiende una estrategia y luego tendrá un presupuesto de 20 millones de los que podrá tomar decisiones y podrá evaluar sus efectos.</h3>", unsafe_allow_html=True)
     
-    with st.container():
-        st.info("**Objetivo:** Este simulador permite diseñar una estrategia y evaluar el impacto de las decisiones financieras y operativas.")
-        st.write("**Instrucciones:** Llena el Canvas evaluando cada punto como Fortaleza o Debilidad. Luego, usa tu presupuesto de $20M para mejorar los KPIs.")
-
     st.header("Fase 1: Diagnóstico Integral de Negocio")
     with st.form("diagnostico_form"):
         col_id1, col_id2 = st.columns(2)
         with col_id1:
             empresa_input = st.text_input("Nombre de la Organización:")
         with col_id2:
-            industria_input = st.selectbox("Industria:", ["Agricultura","Agroindustria","Construcción","Quimicos","Manufactura", "Servicios", "Bancario","Alimentos y Bebidas","Tecnología", "Retail"])
+            industria_input = st.selectbox("Industria:", ["Agricultura","Agroindustria","Construcción","Quimicos","Manufactura", "Servicios", "Bancario y serficios financieros","Alimentos y Bebidas","Tecnología", "Retail","Textiles y Vestuario"])
         
         st.subheader("I. Arquitectura de Negocio (Canvas) y Autoevaluación")
-        campos_canvas = ["Propuesta de Valor", "Procesos/Actividades Clave", "Recursos Tecnológicos", "Recursos Humanos", "Infraestructura", "Socios Clave"]
+        st.caption("Define cada elemento y selecciona si representa actualmente una Fortaleza o una Debilidad.")
+
+        # --- ESQUEMA DETALLADO RESTAURADO ---
+        campos_canvas = [
+            "Propuesta de Valor", 
+            "Procesos/actividades Clave1",
+            "Procesos/Actividades Clave2",
+            "Procesos/Actividades Clave3", 
+            "Procesos/Actividades Clave4", 
+            "Recursos Tecnologico Clave",
+            "Recursos Humano Clave", 
+            "Recursos Informatico clave", 
+            "Infraestructura clave", 
+            "Socios Clave"
+        ]
         respuestas_canvas = {}
 
         for campo in campos_canvas:
@@ -104,8 +116,8 @@ if st.session_state.paso == 1:
         st.divider()
         st.subheader("II. Análisis del Entorno (FODA Externo)")
         f1, f2 = st.columns(2)
-        with f1: opp = st.text_area("Oportunidades:")
-        with f2: ame = st.text_area("Amenazas:")
+        with f1: opp = st.text_area("Oportunidades (Factores Externos Positivos):")
+        with f2: ame = st.text_area("Amenazas (Factores Externos Negativos):")
         
         if st.form_submit_button("Siguiente"):
             if empresa_input:
@@ -115,7 +127,7 @@ if st.session_state.paso == 1:
                 st.session_state.diagnostico_texto = " ".join([v["texto"] for v in respuestas_canvas.values()]) + f" {opp} {ame}"
                 st.session_state.paso = 2
                 st.rerun()
-            else: st.error("Ingresa el nombre de la empresa.")
+            else: st.error("Por favor ingresa el nombre de la empresa.")
 
 # FASE 2: ESTRATEGIA
 elif st.session_state.paso == 2:
@@ -157,7 +169,7 @@ elif st.session_state.paso == 3:
             else: st.info("No hay inversiones registradas.")
 
     with col_ctrl:
-        st.subheader("Panel de Decisiones")
+        st.subheader("Simulación")
         st.metric("Presupuesto Disponible", f"${round(st.session_state.presupuesto, 2)}M")
         seleccion = st.selectbox("Elegir Iniciativa:", list(DECISIONES.keys()))
         if st.button("Ejecutar Inversión", use_container_width=True):
@@ -177,15 +189,18 @@ elif st.session_state.paso == 3:
             else: st.error("Presupuesto insuficiente")
 
         if st.session_state.ultimo_impacto:
-            st.write("**Último impacto:**")
+            st.write("**Impacto de la última decisión:**")
             st.dataframe(pd.DataFrame(st.session_state.ultimo_impacto), hide_index=True)
         
         st.divider()
         if st.button("📊 GENERAR REPORTE FINAL", type="primary", use_container_width=True):
             st.session_state.paso = 4
             st.rerun()
+        if st.button("🔄 Reiniciar"):
+            st.session_state.clear()
+            st.rerun()
 
-# FASE 4: REPORTE FINAL (SOLUCIÓN INTEGRADA)
+# FASE 4: REPORTE FINAL INTEGRADO
 elif st.session_state.paso == 4:
     st.markdown("<h1>Reporte Estratégico Final</h1>", unsafe_allow_html=True)
     
@@ -194,36 +209,46 @@ elif st.session_state.paso == 4:
     st.text_input("Nombre del Participante:")
     
     st.markdown("---")
+    # INTEGRACIÓN DE MATRIZ DE FORTALEZAS Y DEBILIDADES RESUMIDA
     st.subheader("II. Interpretación del Diagnóstico Interno (Canvas)")
+    st.write("A continuación se presentan los elementos clave de la arquitectura de negocio clasificados por su impacto estratégico:")
     
-    # MATRIZ RESUMIDA DE FORTALEZAS Y DEBILIDADES
     col_fort, col_deb = st.columns(2)
     with col_fort:
         st.markdown("<h4 style='color: #10B981;'>💪 Capacidades Críticas (Fortalezas)</h4>", unsafe_allow_html=True)
         forts = {k: v for k, v in st.session_state.datos_f1["Canvas"].items() if v['tipo'] == "Fortaleza"}
-        for k, v in forts.items(): st.success(f"**{k}:** {v['texto']}") if v['texto'] else None
+        for k, v in forts.items(): 
+            if v['texto']: st.success(f"**{k}:** {v['texto']}")
             
     with col_deb:
         st.markdown("<h4 style='color: #EF4444;'>⚠️ Brechas Estratégicas (Debilidades)</h4>", unsafe_allow_html=True)
         debs = {k: v for k, v in st.session_state.datos_f1["Canvas"].items() if v['tipo'] == "Debilidad"}
-        for k, v in debs.items(): st.error(f"**{k}:** {v['texto']}") if v['texto'] else None
+        for k, v in debs.items(): 
+            if v['texto']: st.error(f"**{k}:** {v['texto']}")
 
     st.markdown("---")
-    st.subheader("III. Análisis Externo y Estrategia")
+    st.subheader("III. Análisis Externo y Estrategia Play to Win")
     c1, c2 = st.columns(2)
     c1.warning(f"**Oportunidades:** {st.session_state.datos_f1['Oportunidades']}")
     c2.error(f"**Amenazas:** {st.session_state.datos_f1['Amenazas']}")
     
-    frase = f"Aspiramos a **{st.session_state.aspiracion}** en **{st.session_state.donde}** mediante **{st.session_state.como}**, con capacidades en **{st.session_state.que}**."
-    st.info(f"**Declaración Estratégica:** {frase}")
+    frase_integrada = f"Aspiramos a **{st.session_state.aspiracion}** en **{st.session_state.donde}** mediante **{st.session_state.como}**, apalancado en capacidades de **{st.session_state.que}**."
+    st.info(f"**Estrategia Integrada:** {frase_integrada}")
 
     st.subheader("IV. Resultados de los KPIs")
     res_rows = []
     for p, kpis in st.session_state.kpis.items():
-        for k, d in kpis.items(): res_rows.append({"Perspectiva": p, "KPI": k, "Resultado": d['actual'], "Meta": d['ideal']})
+        for k, d in kpis.items():
+            res_rows.append({"Perspectiva": p, "KPI": k, "Resultado": d['actual'], "Meta": d['ideal']})
     st.table(pd.DataFrame(res_rows))
 
-    st.subheader("V. Reflexión Final")
+    st.subheader("V. Historial de Decisiones")
+    if st.session_state.historial: st.table(pd.DataFrame(st.session_state.historial))
+
+    st.subheader("VI. Reflexión de Aprendizaje")
+    st.write("Analiza la coherencia de tus decisiones:")
     st.text_area("¿Cómo ayudaron tus inversiones a cerrar las 'Brechas Estratégicas' detectadas arriba?", height=150)
     
-    if st.button("Finalizar Actividad"): st.balloons()
+    if st.button("Finalizar Actividad"):
+        st.balloons()
+        st.success("¡Simulación completada con éxito!")
