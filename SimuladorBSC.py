@@ -66,7 +66,7 @@ DECISIONES = {
 
 # FASE 1: DIAGNÓSTICO
 if st.session_state.paso == 1:
-    st.title("Elaborado por: Dr. Alejandro Orantes Kestler")
+    st.header("Elaborado por: Dr. Alejandro Orantes Kestler")
     st.title("Fase 1: Diagnóstico Integral de Negocio")
     with st.form("diagnostico_form"):
         col_id1, col_id2 = st.columns(2)
