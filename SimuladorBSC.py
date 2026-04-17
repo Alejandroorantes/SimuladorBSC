@@ -8,7 +8,7 @@ import google.generativeai as genai
 # 1. CONFIGURACIÓN DE IA (GEMINI) - CORREGIDA
 # ==========================================
 # Reemplaza con tu llave de Google AI Studio
-API_KEY = "AQ.Ab8RN6JbuRr2l-2IUw-qVas7zG0n2sOmSZv2M3IJY-G6y-qRag" 
+API_KEY = "AQ.Ab8RN6Lv4M2Kr87aQ-Vf_4cLpRXrzKONLBeoNPzzNbqVpP-nJA" 
 
 # Configuración robusta para evitar el error 401
 try:
