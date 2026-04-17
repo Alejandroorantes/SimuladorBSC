@@ -71,7 +71,6 @@ if st.session_state.paso == 1:
     st.markdown("<h3 style='text-align: left; color: #1E3A8A; font-size: 20px;'>Objetivo: este simulador fue elaborado para que los estudiantes diseñen una estrategia y luego simular la toma de decisiones y que se comprenda el impacto que tiene cada decisión.</h1>", unsafe_allow_html=True)
     st.markdown("<h3 style='text-align: left; color: #1E3A8A; font-size: 20px;'>Instrucciones: seleccione una empresa que conozca e intente llenar la mayor cantidad de informacion que conozca sobre la empresa y esto permitirá que el programa le recomiende una estrategia y luego tendrá un presupuesto de 20 millones de los que podrá tomar decisiones y podrá evaluar sus efectos.</h1>", unsafe_allow_html=True)
     st.header("Fase 1: Diagnóstico Integral de Negocio")
-    st.header("Fase 1: Diagnóstico Integral de Negocio")
     with st.form("diagnostico_form"):
         col_id1, col_id2 = st.columns(2)
         with col_id1:
