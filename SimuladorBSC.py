@@ -12,7 +12,7 @@ API_KEY = "AQ.Ab8RN6Lv4M2Kr87aQ-Vf_4cLpRXrzKONLBeoNPzzNbqVpP-nJA"
 
 try:
     genai.configure(api_key=API_KEY)
-    model = genai.GenerativeModel('projects/843243159316')
+    model = genai.GenerativeModel('Default Gemini API Key')
     ia_disponible = True
 except:
     ia_disponible = False
