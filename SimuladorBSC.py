@@ -12,7 +12,7 @@ API_KEY = "AQ.Ab8RN6JbuRr2l-2IUw-qVas7zG0n2sOmSZv2M3IJY-G6y-qRag"
 
 try:
     genai.configure(api_key=API_KEY)
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-3-flash')
     ia_disponible = True
 except:
     ia_disponible = False
