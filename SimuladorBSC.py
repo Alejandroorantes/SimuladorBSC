@@ -14,7 +14,7 @@ API_KEY = "AQ.Ab8RN6JbuRr2l-2IUw-qVas7zG0n2sOmSZv2M3IJY-G6y-qRag"
 try:
     genai.configure(api_key=API_KEY)
     # Forzamos al modelo a usar la configuración de la API Key
-    model = genai.GenerativeModel(model_name='gemini-1.5-flash')
+    model = genai.GenerativeModel(model_name='gemini-3-flash')
     ia_disponible = True
 except Exception as e:
     ia_disponible = False
