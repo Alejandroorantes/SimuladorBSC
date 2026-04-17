@@ -118,7 +118,7 @@ elif st.session_state.paso == 2:
         if st.form_submit_button("Iniciar Simulador"):
             st.session_state.donde = donde
             st.session_state.como = como
-            st.session_state.como = que
+            st.session_state.que = que
             st.session_state.paso = 3
             st.rerun()
 
