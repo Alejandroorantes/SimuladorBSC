@@ -6,7 +6,7 @@ import google.generativeai as genai  # Importamos la librería de Gemini
 
 # --- CONFIGURACIÓN DE GEMINI ---
 # Reemplaza 'TU_API_KEY_AQUI' con tu llave real o usa un secreto de Streamlit
-API_KEY = "AQ.Ab8RN6Lv4M2Kr87aQ-Vf_4cLpRXrzKONLBeoNPzzNbqVpP-nJA" 
+API_KEY = AQ.Ab8RN6Lv4M2Kr87aQ-Vf_4cLpRXrzKONLBeoNPzzNbqVpP-nJA 
 genai.configure(api_key=API_KEY)
 model = genai.GenerativeModel('gemini-1.5-flash')
 
