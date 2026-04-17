@@ -67,7 +67,7 @@ DECISIONES = {
 # FASE 1: DIAGNÓSTICO
 if st.session_state.paso == 1:
     st.markdown("<h1 style='text-align: center; color: #1E3A8A; font-size: 50px;'>Simulador de Estrategia de negocios</h1>", unsafe_allow_html=True)
-    st.markdown("<h3 style='text-align: center; color: #1E3A8A; font-size: 50px;'>Elaborado por: Dr. Alejandro Orantes Kestler</h1>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align: center; color: #1E3A8A; font-size: 30px;'>Elaborado por: Dr. Alejandro Orantes Kestler</h1>", unsafe_allow_html=True)
     st.header("Fase 1: Diagnóstico Integral de Negocio")
     with st.form("diagnostico_form"):
         col_id1, col_id2 = st.columns(2)
