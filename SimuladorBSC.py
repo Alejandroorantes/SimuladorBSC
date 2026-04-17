@@ -74,35 +74,39 @@ if st.session_state.paso == 1:
         with col_id2:
             industria_input = st.selectbox("Industria:", ["Manufactura", "Servicios", "Bancario","Agroindustria","Alimentos y Bebidas","Tecnología", "Retail"])
         
-        st.subheader("I. Arquitectura de Negocio (Canvas)")
-        c1, c2 = st.columns(2)
-        with c1:
-            vp = st.text_area("Propuesta de Valor:")
-            proc = st.text_area("Procesos Clave:")
-        with c2:
-            recursos = st.text_area("Recursos Clave:")
-            socios = st.text_area("Socios Clave:")
+        st.subheader("I. Arquitectura de Negocio (Canvas) y Autoevaluación")
+        st.caption("Define cada elemento y selecciona si representa actualmente una Fortaleza o una Debilidad.")
+
+        campos_canvas = ["Propuesta de Valor", "Procesos Clave", "Recursos Clave", "Socios Clave"]
+        respuestas_canvas = {}
+
+        for campo in campos_canvas:
+            c_txt, c_tipo = st.columns([3, 1])
+            with c_txt:
+                txt = st.text_area(f"{campo}:", height=68, placeholder=f"Describe aquí tu {campo.lower()}...")
+            with c_tipo:
+                tipo = st.selectbox(f"Situación:", ["Fortaleza", "Debilidad"], key=f"tipo_{campo}")
+            respuestas_canvas[campo] = {"texto": txt, "tipo": tipo}
             
-        st.subheader("II. Análisis FODA Estructurado")
+        st.divider()
+        st.subheader("II. Análisis del Entorno (FODA Externo)")
         f1, f2 = st.columns(2)
         with f1:
-            fort = st.text_area("Fortalezas:")
-            opp = st.text_area("Oportunidades:")
+            opp = st.text_area("Oportunidades (Factores Externos Positivos):")
         with f2:
-            deb = st.text_area("Debilidades:")
-            ame = st.text_area("Amenazas:")
+            ame = st.text_area("Amenazas (Factores Externos Negativos):")
         
         if st.form_submit_button("Siguiente"):
             if empresa_input:
                 st.session_state.empresa = empresa_input
                 st.session_state.industria = industria_input
                 st.session_state.datos_f1 = {
-                    "Propuesta de Valor": vp, "Procesos Clave": proc, 
-                    "Recursos Clave": recursos, "Socios Clave": socios,
-                    "Fortalezas": fort, "Oportunidades": opp, 
-                    "Debilidades": deb, "Amenazas": ame
+                    "Canvas": respuestas_canvas,
+                    "Oportunidades": opp,
+                    "Amenazas": ame
                 }
-                st.session_state.diagnostico_texto = f"{vp} {proc} {recursos} {socios} {fort} {opp} {deb} {ame}"
+                # Consolidar texto para motor de coherencia
+                st.session_state.diagnostico_texto = " ".join([v["texto"] for v in respuestas_canvas.values()]) + f" {opp} {ame}"
                 st.session_state.paso = 2
                 st.rerun()
             else:
@@ -112,9 +116,9 @@ if st.session_state.paso == 1:
 elif st.session_state.paso == 2:
     st.title("Fase 2: Estrategia Play to Win")
     with st.form("estrategia_form"):
-        aspiracion = st.text_input("¿Cuál es nuestra aspiración?") 
-        donde = st.text_input("¿Dónde jugar?")
-        como = st.text_input("¿Cómo ganar?")
+        aspiracion = st.text_input("¿Cuál es nuestra aspiración ganadora?") 
+        donde = st.text_input("¿Dónde jugaremos?")
+        como = st.text_input("¿Cómo ganaremos?")
         que = st.text_input("¿Qué capacidades deben estar presentes?")
         if st.form_submit_button("Iniciar Simulador"):
             st.session_state.aspiracion = aspiracion
@@ -193,47 +197,48 @@ elif st.session_state.paso == 3:
 elif st.session_state.paso == 4:
     st.title("Reporte Estratégico Final")
     
-    # 1. Nombre de la persona
     st.subheader("I. Información del Participante")
     nombre_participante = st.text_input("Nombre completo de quien completó la simulación:")
     
     st.header(f"Organización: {st.session_state.empresa} | Industria: {st.session_state.industria}")
     
-    # SECCIÓN DE RESUMEN
     st.markdown("---")
-    st.subheader("II. Resumen del Diagnóstico")
+    st.subheader("II. Resumen del Diagnóstico (Canvas + Autoevaluación)")
     col_rep_a, col_rep_b = st.columns(2)
     with col_rep_a:
-        st.markdown("**Arquitectura de Negocio (Canvas)**")
-        for key in ["Propuesta de Valor", "Procesos Clave", "Recursos Clave", "Socios Clave"]:
-            st.info(f"**{key}:** {st.session_state.datos_f1.get(key, 'N/A')}")
+        st.markdown("**Arquitectura Interna**")
+        for campo, info in st.session_state.datos_f1["Canvas"].items():
+            icon = "💪" if info['tipo'] == "Fortaleza" else "⚠️"
+            st.info(f"**{campo} ({icon} {info['tipo']}):** {info['texto']}")
     with col_rep_b:
-        st.markdown("**Análisis FODA**")
-        for key in ["Fortalezas", "Oportunidades", "Debilidades", "Amenazas"]:
-            st.warning(f"**{key}:** {st.session_state.datos_f1.get(key, 'N/A')}")
+        st.markdown("**Análisis Externo**")
+        st.warning(f"**Oportunidades:** {st.session_state.datos_f1['Oportunidades']}")
+        st.error(f"**Amenazas:** {st.session_state.datos_f1['Amenazas']}")
 
     st.markdown("---")
     st.subheader("III. Estrategia y Resultados Obtenidos")
-    # Propuesta Integrada de los 3 elementos
-    st.success(f"**Estrategia:** Nuestra Aspiración es {st.session_state.aspiracion} enfocandonos en {st.session_state.donde} mediante {st.session_state.como} apalancado en {st.session_state.que}")
+    frase_integrada = (
+        f"Nuestra aspiración es **{st.session_state.aspiracion}**, "
+        f"enfocándonos en **{st.session_state.donde}** "
+        f"mediante **{st.session_state.como}**, "
+        f"apalancado en **{st.session_state.que}**."
+    )
+    st.success(f"**Estrategia Integrada:** {frase_integrada}")
     
-    # KPIs Finales
     final_rows = []
     for p, kpis in st.session_state.kpis.items():
         for k, d in kpis.items():
             final_rows.append({"Perspectiva": p, "KPI": k, "Resultado": d['actual'], "Meta": d['ideal']})
     st.table(pd.DataFrame(final_rows))
     
-    # Inversiones
     st.subheader("IV. Historial de Decisiones")
     if st.session_state.historial: st.table(pd.DataFrame(st.session_state.historial))
     
-    # 2. Análisis de Aprendizaje
     st.markdown("---")
     st.subheader("V. Análisis de Aprendizaje y Reflexión Estratégica")
-    st.write("Con base en la mezcla de tu estrategia inicial, las decisiones de inversión tomadas y los resultados en los KPIs:")
+    st.write("Reflexiona sobre la coherencia entre tu autoevaluación inicial (Canvas) y las decisiones tomadas:")
     analisis_aprendizaje = st.text_area(
-        "Describe tu análisis: ¿Qué relación observas entre tus inversiones y los resultados? ¿Qué harías diferente a futuro para mejorar el desempeño?",
+        "¿Cómo influyeron tus debilidades identificadas en tu plan de inversión? ¿Los resultados finales validan tu estrategia?",
         height=200,
         placeholder="Escribe aquí tu reflexión..."
     )
