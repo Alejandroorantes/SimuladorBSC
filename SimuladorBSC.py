@@ -117,7 +117,7 @@ elif st.session_state.paso == 2:
         como = st.text_input("¿Cómo ganar?")
         que = st.text_input("¿Qué capacidades deben estar presentes?")
         if st.form_submit_button("Iniciar Simulador"):
-            st.session_state.donde = aspiracion
+            st.session_state.aspiracion = aspiracion
             st.session_state.donde = donde
             st.session_state.como = como
             st.session_state.que = que
