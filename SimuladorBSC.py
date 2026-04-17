@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-import copy
 
 # Configuración inicial
 st.set_page_config(page_title="Simulador de Estrategia Alex", layout="wide")
