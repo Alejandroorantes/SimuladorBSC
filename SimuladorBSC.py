@@ -66,7 +66,7 @@ DECISIONES = {
 
 # FASE 1: DIAGNÓSTICO
 if st.session_state.paso == 1:
-    st.title("Simulador de Estrategia de negocios")
+    st.markdown("<h1 style='text-align: center; color: #1E3A8A; font-size: 50px;'>Simulador de Estrategia de negocios</h1>", unsafe_allow_html=True)
     st.subheader("Elaborado por: Dr. Alejandro Orantes Kestler")
     st.header("Fase 1: Diagnóstico Integral de Negocio")
     with st.form("diagnostico_form"):
