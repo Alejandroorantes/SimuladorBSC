@@ -35,20 +35,20 @@ if 'paso' not in st.session_state:
     st.session_state.datos_f1 = {} 
     st.session_state.kpis = {
         "Financiera": {
-            "ROI": {"actual": 8.0, "ideal": 15.0, "unit": "%"},
-            "Margen EBITDA": {"actual": 12.0, "ideal": 18.0, "unit": "%"}
+            "ROI": {"actual": 8.0, "ideal": 15.0},
+            "Margen EBITDA": {"actual": 12.0, "ideal": 18.0}
         },
         "Clientes": {
-            "Satisfacción (NPS)": {"actual": 65.0, "ideal": 90.0, "unit": "pts"},
-            "Cuota Mercado": {"actual": 15.0, "ideal": 25.0, "unit": "%"}
+            "Satisfacción (NPS)": {"actual": 65.0, "ideal": 90.0},
+            "Cuota Mercado": {"actual": 15.0, "ideal": 25.0}
         },
         "Procesos": {
-            "Eficiencia OEE": {"actual": 70.0, "ideal": 90.0, "unit": "%"},
-            "Tiempo Ciclo": {"actual": 15.0, "ideal": 8.0, "unit": "días"}
+            "Eficiencia OEE": {"actual": 70.0, "ideal": 90.0},
+            "Tiempo Ciclo": {"actual": 15.0, "ideal": 8.0}
         },
         "Aprendizaje": {
-            "Índice Innovación": {"actual": 3.0, "ideal": 9.0, "unit": "proy"},
-            "Capacitación": {"actual": 20.0, "ideal": 55.0, "unit": "hrs"}
+            "Índice Innovación": {"actual": 3.0, "ideal": 9.0},
+            "Capacitación": {"actual": 20.0, "ideal": 55.0}
         }
     }
 
@@ -108,6 +108,7 @@ if st.session_state.paso == 1:
             else:
                 st.error("Por favor ingresa el nombre de la empresa.")
 
+# FASE 2: ESTRATEGIA
 elif st.session_state.paso == 2:
     st.title("Fase 2: Estrategia Play to Win")
     with st.form("estrategia_form"):
@@ -119,9 +120,9 @@ elif st.session_state.paso == 2:
             st.session_state.paso = 3
             st.rerun()
 
+# FASE 3: SIMULADOR
 elif st.session_state.paso == 3:
     st.title(f"Tablero de Control: {st.session_state.empresa}")
-    
     col_vis, col_ctrl = st.columns([2, 1])
 
     with col_vis:
@@ -180,17 +181,23 @@ elif st.session_state.paso == 3:
         if st.button("📊 GENERAR REPORTE FINAL", type="primary", use_container_width=True):
             st.session_state.paso = 4
             st.rerun()
-        if st.button("🔄 Reiniciar", use_container_width=True):
+        if st.button("🔄 Reiniciar"):
             st.session_state.clear()
             st.rerun()
 
+# FASE 4: REPORTE FINAL ACTUALIZADA
 elif st.session_state.paso == 4:
     st.title("Reporte Estratégico Final")
+    
+    # 1. Nombre de la persona
+    st.subheader("I. Información del Participante")
+    nombre_participante = st.text_input("Nombre completo de quien completó la simulación:")
+    
     st.header(f"Organización: {st.session_state.empresa} | Industria: {st.session_state.industria}")
     
-    # SECCIÓN DE RESUMEN (CABECERA)
+    # SECCIÓN DE RESUMEN
     st.markdown("---")
-    st.subheader("I. Resumen del Diagnóstico de la Fase 1")
+    st.subheader("II. Resumen del Diagnóstico")
     col_rep_a, col_rep_b = st.columns(2)
     with col_rep_a:
         st.markdown("**Arquitectura de Negocio (Canvas)**")
@@ -202,8 +209,8 @@ elif st.session_state.paso == 4:
             st.warning(f"**{key}:** {st.session_state.datos_f1.get(key, 'N/A')}")
 
     st.markdown("---")
-    st.subheader("II. Estrategia y Resultados")
-    st.success(f"**¿Dónde jugar?:** {st.session_state.donde} | **¿Cómo ganar?:** {st.session_state.como}")
+    st.subheader("III. Estrategia y Resultados Obtenidos")
+    st.success(f"**Estrategia:** {st.session_state.como} en {st.session_state.donde}")
     
     # KPIs Finales
     final_rows = []
@@ -213,10 +220,25 @@ elif st.session_state.paso == 4:
     st.table(pd.DataFrame(final_rows))
     
     # Inversiones
-    st.subheader("III. Bitácora de Inversiones")
+    st.subheader("IV. Historial de Decisiones")
     if st.session_state.historial: st.table(pd.DataFrame(st.session_state.historial))
-    st.write(f"**Presupuesto Remanente:** ${round(st.session_state.presupuesto, 2)}M")
     
-    if st.button("Volver al Simulador"):
-        st.session_state.paso = 3
-        st.rerun()
+    # 2. Análisis de Aprendizaje
+    st.markdown("---")
+    st.subheader("V. Análisis de Aprendizaje y Reflexión Estratégica")
+    st.write("Con base en la mezcla de tu estrategia inicial, las decisiones de inversión tomadas y los resultados en los KPIs:")
+    analisis_aprendizaje = st.text_area(
+        "Describe tu análisis: ¿Qué relación observas entre tus inversiones y los resultados? ¿Qué harías diferente a futuro para mejorar el desempeño?",
+        height=200,
+        placeholder="Escribe aquí tu reflexión..."
+    )
+    
+    col_fin1, col_fin2 = st.columns(2)
+    with col_fin1:
+        if st.button("Volver al Simulador"):
+            st.session_state.paso = 3
+            st.rerun()
+    with col_fin2:
+        if st.button("Finalizar Actividad"):
+            st.balloons()
+            st.success("¡Simulación y Reporte Completados con Éxito!")
