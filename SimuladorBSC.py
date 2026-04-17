@@ -2,64 +2,64 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-import google.generativeai as genai  # Importamos la librería de Gemini
+import google.generativeai as genai
 
-# --- CONFIGURACIÓN DE GEMINI ---
-# Reemplaza 'TU_API_KEY_AQUI' con tu llave real o usa un secreto de Streamlit
-API_KEY = AQ.Ab8RN6Lv4M2Kr87aQ-Vf_4cLpRXrzKONLBeoNPzzNbqVpP-nJA 
-genai.configure(api_key=API_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash')
+# ==========================================
+# 1. CONFIGURACIÓN DE IA (GEMINI)
+# ==========================================
+# Reemplaza con tu llave de Google AI Studio
+API_KEY = "AQ.Ab8RN6Lv4M2Kr87aQ-Vf_4cLpRXrzKONLBeoNPzzNbqVpP-nJA" 
 
-st.set_page_config(page_title="Simulador de Estrategia Pro + IA", layout="wide")
+try:
+    genai.configure(api_key=API_KEY)
+    model = genai.GenerativeModel('gemini-1.5-flash')
+    ia_disponible = True
+except:
+    ia_disponible = False
+
+# Configuración de página
+st.set_page_config(page_title="Simulador Estratégico Pro", layout="wide")
 
 # --- MOTOR DE COHERENCIA (Lógica Interna) ---
 def calcular_modificador(texto_diagnostico, accion_nombre):
     texto = texto_diagnostico.lower()
     keywords = {
-        "1. Automatización Robótica (RPA/AI)": ["procesos", "eficiencia", "costos", "manual", "lento", "operación"],
-        "2. Programa de Lealtad Omnicanal": ["clientes", "nps", "fidelidad", "ventas", "servicio", "mercado"],
-        "3. I+D: Productos Sustentables": ["innovacion", "producto", "verde", "sustentable", "futuro", "desarrollo"],
-        "4. Reskilling de Talento Digital": ["talento", "capacitacion", "gente", "personas", "habilidades", "recursos"],
-        "5. Expansión de Mercados": ["crecimiento", "mercado", "global", "ventas", "nuevo", "socios"],
-        "6. Smart Logistics": ["logistica", "entrega", "inventario", "cadena", "transporte", "procesos"],
-        "7. Ciberseguridad": ["riesgo", "seguridad", "datos", "nube", "ataque", "recursos"]
+        "1. Automatización Robótica (RPA/AI)": ["procesos", "eficiencia", "operación", "manual", "lento"],
+        "2. Programa de Lealtad Omnicanal": ["clientes", "nps", "fidelidad", "ventas", "servicio"],
+        "3. I+D: Productos Sustentables": ["innovacion", "producto", "verde", "sustentable", "desarrollo"],
+        "4. Reskilling de Talento Digital": ["talento", "capacitacion", "gente", "personas", "habilidades"],
+        "5. Expansión de Mercados": ["crecimiento", "mercado", "global", "ventas", "socios"],
+        "6. Smart Logistics": ["logistica", "entrega", "inventario", "cadena", "transporte"],
+        "7. Ciberseguridad": ["riesgo", "seguridad", "datos", "ataque", "nube"]
     }
     if any(word in texto for word in keywords.get(accion_nombre, [])):
         return 1.2
     return 1.0
 
-# --- FUNCIÓN PARA CONSULTAR A GEMINI ---
-def obtener_recomendacion_ia(datos_empresa, estrategia):
+def obtener_recomendacion_ia(datos, estrategia):
     prompt = f"""
-    Actúa como un Consultor de Estrategia Senior y experto en Transformación Digital.
-    Analiza la siguiente información de un estudiante de maestría:
+    Actúa como un Consultor de Estrategia Senior. Analiza este modelo de negocio:
+    EMPRESA: {datos['empresa']} ({datos['industria']})
+    CANVAS: Valor: {datos['vp']}, Procesos: {datos['proc']}, Recursos: {datos['recursos']}, Socios: {datos['socios']}
+    FODA: Fortalezas: {datos['fort']}, Oportunidades: {datos['opp']}, Debilidades: {datos['deb']}, Amenazas: {datos['ame']}
+    ESTRATEGIA: Jugar en {estrategia['donde']} y ganar mediante {estrategia['como']}
     
-    EMPRESA: {datos_empresa['empresa']}
-    INDUSTRIA: {datos_empresa['industria']}
-    ARQUITECTURA (CANVAS): {datos_empresa['vp']}, {datos_empresa['proc']}, {datos_empresa['recursos']}
-    FODA: Fortalezas: {datos_empresa['fort']}, Debilidades: {datos_empresa['deb']}
-    ESTRATEGIA (Play to Win): Jugar en {estrategia['donde']} y ganar mediante {estrategia['como']}.
-    
-    PROPORCIONA:
-    1. Una validación breve de si la estrategia es coherente con el FODA.
-    2. Dos recomendaciones críticas de cosas que el estudiante NO está tomando en cuenta.
-    Sé conciso, profesional y retador académicamente.
+    TAREA: Da un feedback breve sobre la coherencia y menciona 2 puntos ciegos.
     """
     try:
         response = model.generate_content(prompt)
         return response.text
-    except Exception as e:
-        return f"Error al conectar con Gemini: {str(e)}"
+    except:
+        return "La IA no está disponible en este momento. Revisa tu API KEY."
 
-# --- INICIALIZACIÓN DE ESTADO ---
+# ==========================================
+# 2. INICIALIZACIÓN DE ESTADO
+# ==========================================
 if 'paso' not in st.session_state:
     st.session_state.paso = 1
     st.session_state.presupuesto = 20.0
     st.session_state.historial = []
     st.session_state.ultimo_impacto = None
-    st.session_state.diagnostico_texto = ""
-    st.session_state.empresa = ""
-    st.session_state.industria = ""
     st.session_state.datos_f1 = {}
     st.session_state.kpis = {
         "Financiera": {"ROI": {"actual": 8.0, "ideal": 15.0}, "Margen EBITDA": {"actual": 12.0, "ideal": 18.0}},
@@ -78,82 +78,133 @@ DECISIONES = {
     "7. Ciberseguridad": {"costo": 3.0, "impacto": {"Procesos": {"Eficiencia OEE": 5.0}, "Aprendizaje": {"Índice Innovación": 1.0}}}
 }
 
-# --- NAVEGACIÓN ---
+# ==========================================
+# 3. NAVEGACIÓN Y FASES
+# ==========================================
 
+# FASE 1: DIAGNÓSTICO
 if st.session_state.paso == 1:
     st.title("Fase 1: Diagnóstico Integral")
-    with st.form("f1"):
-        st.session_state.empresa = st.text_input("Empresa:")
-        st.session_state.industria = st.selectbox("Industria:", ["Manufactura", "Servicios", "Tecnología", "Retail"])
+    with st.form("f1_form"):
+        empresa_in = st.text_input("Nombre de la Empresa:")
+        industria_in = st.selectbox("Industria:", ["Manufactura", "Servicios", "Tecnología", "Retail"])
+        
+        st.subheader("I. Arquitectura de Negocio (Canvas)")
         c1, c2 = st.columns(2)
         with c1:
-            vp = st.text_area("Propuesta de Valor:"); proc = st.text_area("Procesos Clave:")
-            fort = st.text_area("Fortalezas:"); opp = st.text_area("Oportunidades:")
+            vp = st.text_area("Propuesta de Valor:")
+            proc = st.text_area("Procesos Clave:")
         with c2:
-            recursos = st.text_area("Recursos Clave:"); socios = st.text_area("Socios Clave:")
+            recursos = st.text_area("Recursos Clave:")
+            socios = st.text_area("Socios Clave:")
+            
+        st.subheader("II. Análisis FODA")
+        f1, f2 = st.columns(2)
+        with f1:
+            fort = st.text_area("Fortalezas:"); opp = st.text_area("Oportunidades:")
+        with f2:
             deb = st.text_area("Debilidades:"); ame = st.text_area("Amenazas:")
+            
         if st.form_submit_button("Siguiente"):
-            st.session_state.datos_f1 = {"empresa": st.session_state.empresa, "industria": st.session_state.industria, "vp": vp, "proc": proc, "recursos": recursos, "socios": socios, "fort": fort, "opp": opp, "deb": deb, "ame": ame}
-            st.session_state.diagnostico_texto = f"{vp} {proc} {recursos} {socios} {fort} {opp} {deb} {ame}"
-            st.session_state.paso = 2
-            st.rerun()
+            if empresa_in:
+                st.session_state.datos_f1 = {
+                    "empresa": empresa_in, "industria": industria_in,
+                    "vp": vp, "proc": proc, "recursos": recursos, "socios": socios,
+                    "fort": fort, "opp": opp, "deb": deb, "ame": ame
+                }
+                st.session_state.paso = 2
+                st.rerun()
+            else: st.error("Ingresa el nombre de la empresa")
 
+# FASE 2: ESTRATEGIA
 elif st.session_state.paso == 2:
     st.title("Fase 2: Estrategia")
-    with st.form("f2"):
-        donde = st.text_input("¿Dónde jugar?"); como = st.text_input("¿Cómo ganar?")
+    with st.form("f2_form"):
+        donde = st.text_input("¿Dónde jugar?")
+        como = st.text_input("¿Cómo ganar?")
         if st.form_submit_button("Iniciar Simulador"):
-            st.session_state.donde = donde; st.session_state.como = como
+            st.session_state.donde = donde
+            st.session_state.como = como
             st.session_state.paso = 3
             st.rerun()
 
+# FASE 3: SIMULADOR
 elif st.session_state.paso == 3:
-    st.title(f"Simulador: {st.session_state.empresa}")
+    st.title(f"Simulador: {st.session_state.datos_f1['empresa']}")
     col_vis, col_ctrl = st.columns([2, 1])
 
     with col_vis:
         t_matriz, t_gap, t_ia = st.tabs(["📋 BSC", "📊 Gaps", "🤖 CONSULTORÍA IA"])
-        
-        # Lógica de Matriz y Gaps (Simplificada para el ejemplo)
         with t_matriz:
-            rows = [{"KPI": k, "Actual": d['actual'], "Meta": d['ideal']} for p, ks in st.session_state.kpis.items() for k, d in ks.items()]
+            rows = [{"Perspectiva": p, "KPI": k, "Actual": d['actual'], "Meta": d['ideal']} for p, ks in st.session_state.kpis.items() for k, d in ks.items()]
             st.table(pd.DataFrame(rows))
-        
+        with t_gap:
+            labels = [k for p, ks in st.session_state.kpis.items() for k in ks]
+            vals = [d['actual'] for p, ks in st.session_state.kpis.items() for d in ks.values()]
+            targets = [d['ideal'] for p, ks in st.session_state.kpis.items() for d in ks.values()]
+            fig, ax = plt.subplots(figsize=(10, 4))
+            x = np.arange(len(labels))
+            ax.bar(x - 0.2, vals, 0.4, label='Actual', color='#007bff')
+            ax.bar(x + 0.2, targets, 0.4, label='Meta', color='#e9ecef')
+            ax.set_xticks(x); ax.set_xticklabels(labels, rotation=45); ax.legend()
+            st.pyplot(fig)
         with t_ia:
-            st.subheader("Análisis Estratégico por Gemini")
-            if st.button("Solicitar Recomendación a la IA"):
-                with st.spinner("Analizando tu estrategia..."):
-                    estrategia_data = {"donde": st.session_state.donde, "como": st.session_state.como}
-                    feedback = obtener_recomendacion_ia(st.session_state.datos_f1, estrategia_data)
+            st.subheader("Análisis de Coherencia con Gemini")
+            if st.button("Validar Estrategia con IA"):
+                with st.spinner("Analizando..."):
+                    estr = {"donde": st.session_state.donde, "como": st.session_state.como}
+                    feedback = obtener_recomendacion_ia(st.session_state.datos_f1, estr)
                     st.markdown(feedback)
 
     with col_ctrl:
-        st.subheader("Simulación")
+        st.subheader("Inversiones")
         st.metric("Presupuesto", f"${round(st.session_state.presupuesto, 2)}M")
         sel = st.selectbox("Acción:", list(DECISIONES.keys()))
-        if st.button("Invertir"):
+        if st.button("Ejecutar Inversión", use_container_width=True):
             info = DECISIONES[sel]
             if st.session_state.presupuesto >= info['costo']:
-                mod = calcular_modificador(st.session_state.diagnostico_texto, sel)
+                diag_total = " ".join(st.session_state.datos_f1.values())
+                mod = calcular_modificador(diag_total, sel)
                 st.session_state.presupuesto -= info['costo']
                 for p, ks in info['impacto'].items():
                     for k, v in ks.items():
                         st.session_state.kpis[p][k]['actual'] = round(st.session_state.kpis[p][k]['actual'] + (v * mod), 2)
-                st.session_state.historial.append({"Iniciativa": sel, "Coherencia": "Alta" if mod > 1 else "Normal"})
+                st.session_state.historial.append({"Acción": sel, "Costo": info['costo'], "Bono": "Sí" if mod > 1 else "No"})
                 st.rerun()
         
         st.divider()
-        if st.button("📊 GENERAR REPORTE FINAL", type="primary"):
+        if st.button("📊 REPORTE FINAL", type="primary", use_container_width=True):
             st.session_state.paso = 4
             st.rerun()
+        if st.button("🔄 Reiniciar"):
+            st.session_state.clear()
+            st.rerun()
 
+# FASE 4: REPORTE
 elif st.session_state.paso == 4:
-    st.title("Reporte Final")
-    # Mostrar resumen de Fase 1 (Canvas/FODA) como en el prompt anterior...
-    st.subheader("Diagnóstico Inicial")
-    st.write(st.session_state.datos_f1)
-    st.subheader("KPIs Finales")
-    st.write(st.session_state.kpis)
-    if st.button("Reiniciar"):
-        st.session_state.clear()
+    st.title("Reporte Estratégico Final")
+    d = st.session_state.datos_f1
+    
+    # Cabecera Resumen
+    st.subheader("I. Resumen del Diagnóstico")
+    ra, rb = st.columns(2)
+    with ra:
+        st.markdown("**Arquitectura (Canvas)**")
+        st.write(f"*Valor:* {d['vp']}\n\n*Procesos:* {d['proc']}\n\n*Recursos:* {d['recursos']}\n\n*Socios:* {d['socios']}")
+    with rb:
+        st.markdown("**FODA**")
+        st.write(f"*Fortalezas:* {d['fort']}\n\n*Oportunidades:* {d['opp']}\n\n*Debilidades:* {d['deb']}\n\n*Amenazas:* {d['ame']}")
+    
+    st.divider()
+    st.subheader("II. Estrategia y Resultados")
+    st.info(f"**Estrategia:** {st.session_state.como} en {st.session_state.donde}")
+    
+    f_rows = [{"KPI": k, "Final": d['actual'], "Meta": d['ideal']} for p, ks in st.session_state.kpis.items() for k, d in ks.items()]
+    st.table(pd.DataFrame(f_rows))
+    
+    st.subheader("III. Historial")
+    st.table(pd.DataFrame(st.session_state.historial))
+    
+    if st.button("Volver"):
+        st.session_state.paso = 3
         st.rerun()
