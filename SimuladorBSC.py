@@ -77,7 +77,7 @@ if st.session_state.paso == 1:
         st.subheader("I. Arquitectura de Negocio (Canvas) y Autoevaluación")
         st.caption("Define cada elemento y selecciona si representa actualmente una Fortaleza o una Debilidad.")
 
-        campos_canvas = ["Propuesta de Valor", "Procesos Clave", "Recursos Clave", "Socios Clave"]
+        campos_canvas = ["Propuesta de Valor", "Procesos/actividades Clave1","Procesos/Actividades Clave2", "Recursos Clave", "Socios Clave"]
         respuestas_canvas = {}
 
         for campo in campos_canvas:
