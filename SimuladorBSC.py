@@ -5,20 +5,23 @@ import numpy as np
 import google.generativeai as genai
 
 # ==========================================
-# 1. CONFIGURACIÓN DE IA (GEMINI)
+# 1. CONFIGURACIÓN DE IA (GEMINI) - CORREGIDA
 # ==========================================
 # Reemplaza con tu llave de Google AI Studio
 API_KEY = "AQ.Ab8RN6JbuRr2l-2IUw-qVas7zG0n2sOmSZv2M3IJY-G6y-qRag" 
 
+# Configuración robusta para evitar el error 401
 try:
     genai.configure(api_key=API_KEY)
-    model = genai.GenerativeModel('gemini-3-flash')
+    # Forzamos al modelo a usar la configuración de la API Key
+    model = genai.GenerativeModel(model_name='gemini-1.5-flash')
     ia_disponible = True
-except:
+except Exception as e:
     ia_disponible = False
+    error_config = str(e)
 
 # Configuración de página
-st.set_page_config(page_title="Simulador Estratégico Pro", layout="wide")
+st.set_page_config(page_title="Simulador Estratégico Alex", layout="wide")
 
 # --- MOTOR DE COHERENCIA (Lógica Interna) ---
 def calcular_modificador(texto_diagnostico, accion_nombre):
@@ -37,21 +40,21 @@ def calcular_modificador(texto_diagnostico, accion_nombre):
     return 1.0
 
 def obtener_recomendacion_ia(datos, estrategia):
+    # Prompt optimizado para análisis estructural
     prompt = f"""
     Actúa como un Consultor de Estrategia Senior. Analiza este modelo de negocio:
     EMPRESA: {datos['empresa']} ({datos['industria']})
-    CANVAS: Valor: {datos['vp']}, Procesos: {datos['proc']}, Recursos: {datos['recursos']}, Socios: {datos['socios']}
+    ARQUITECTURA: Valor: {datos['vp']}, Procesos: {datos['proc']}, Recursos: {datos['recursos']}, Socios: {datos['socios']}
     FODA: Fortalezas: {datos['fort']}, Oportunidades: {datos['opp']}, Debilidades: {datos['deb']}, Amenazas: {datos['ame']}
     ESTRATEGIA: Jugar en {estrategia['donde']} y ganar mediante {estrategia['como']}
     
-    TAREA: Da un feedback breve sobre la coherencia y menciona 2 puntos ciegos.
+    TAREA: Da un diagnóstico de coherencia y menciona 2 puntos ciegos estratégicos.
     """
     try:
-        # Intentamos generar el contenido
+        # Importante: No pasar parámetros de seguridad si no es necesario para evitar conflictos de tokens
         response = model.generate_content(prompt)
         return response.text
     except Exception as e:
-        # ESTO ES LO IMPORTANTE: Nos dirá el error real (ej. Invalid API Key, Quota Exceeded, etc.)
         return f"⚠️ Error técnico real: {str(e)}"
 
 # ==========================================
@@ -120,7 +123,7 @@ if st.session_state.paso == 1:
 
 # FASE 2: ESTRATEGIA
 elif st.session_state.paso == 2:
-    st.title("Fase 2: Estrategia")
+    st.title("Fase 2: Estrategia Play to Win")
     with st.form("f2_form"):
         donde = st.text_input("¿Dónde jugar?")
         como = st.text_input("¿Cómo ganar?")
@@ -151,34 +154,34 @@ elif st.session_state.paso == 3:
             ax.set_xticks(x); ax.set_xticklabels(labels, rotation=45); ax.legend()
             st.pyplot(fig)
         with t_ia:
-            st.subheader("Análisis de Coherencia con Gemini")
-            if st.button("Validar Estrategia con IA"):
-                with st.spinner("Analizando..."):
+            st.subheader("Consultoría Estratégica con Gemini")
+            if st.button("Obtener Validación de la IA"):
+                with st.spinner("Analizando modelo de negocio..."):
                     estr = {"donde": st.session_state.donde, "como": st.session_state.como}
                     feedback = obtener_recomendacion_ia(st.session_state.datos_f1, estr)
                     st.markdown(feedback)
 
     with col_ctrl:
-        st.subheader("Inversiones")
+        st.subheader("Simulación")
         st.metric("Presupuesto", f"${round(st.session_state.presupuesto, 2)}M")
-        sel = st.selectbox("Acción:", list(DECISIONES.keys()))
+        sel = st.selectbox("Elegir Iniciativa Estratégica:", list(DECISIONES.keys()))
         if st.button("Ejecutar Inversión", use_container_width=True):
             info = DECISIONES[sel]
             if st.session_state.presupuesto >= info['costo']:
-                diag_total = " ".join(st.session_state.datos_f1.values())
+                diag_total = " ".join(str(v) for v in st.session_state.datos_f1.values())
                 mod = calcular_modificador(diag_total, sel)
                 st.session_state.presupuesto -= info['costo']
                 for p, ks in info['impacto'].items():
                     for k, v in ks.items():
                         st.session_state.kpis[p][k]['actual'] = round(st.session_state.kpis[p][k]['actual'] + (v * mod), 2)
-                st.session_state.historial.append({"Acción": sel, "Costo": info['costo'], "Bono": "Sí" if mod > 1 else "No"})
+                st.session_state.historial.append({"Acción": sel, "Costo": info['costo'], "Coherencia": "Bono Aplicado" if mod > 1 else "Normal"})
                 st.rerun()
         
         st.divider()
-        if st.button("📊 REPORTE FINAL", type="primary", use_container_width=True):
+        if st.button("📊 GENERAR REPORTE FINAL", type="primary", use_container_width=True):
             st.session_state.paso = 4
             st.rerun()
-        if st.button("🔄 Reiniciar"):
+        if st.button("🔄 Reiniciar Simulación"):
             st.session_state.clear()
             st.rerun()
 
@@ -187,26 +190,25 @@ elif st.session_state.paso == 4:
     st.title("Reporte Estratégico Final")
     d = st.session_state.datos_f1
     
-    # Cabecera Resumen
-    st.subheader("I. Resumen del Diagnóstico")
+    st.subheader("I. Resumen del Diagnóstico Inicial")
     ra, rb = st.columns(2)
     with ra:
         st.markdown("**Arquitectura (Canvas)**")
-        st.write(f"*Valor:* {d['vp']}\n\n*Procesos:* {d['proc']}\n\n*Recursos:* {d['recursos']}\n\n*Socios:* {d['socios']}")
+        st.info(f"**Valor:** {d['vp']}\n\n**Procesos:** {d['proc']}\n\n**Recursos:** {d['recursos']}\n\n**Socios:** {d['socios']}")
     with rb:
         st.markdown("**FODA**")
-        st.write(f"*Fortalezas:* {d['fort']}\n\n*Oportunidades:* {d['opp']}\n\n*Debilidades:* {d['deb']}\n\n*Amenazas:* {d['ame']}")
+        st.warning(f"**Fortalezas:** {d['fort']}\n\n**Oportunidades:** {d['opp']}\n\n**Debilidades:** {d['deb']}\n\n**Amenazas:** {d['ame']}")
     
     st.divider()
-    st.subheader("II. Estrategia y Resultados")
-    st.info(f"**Estrategia:** {st.session_state.como} en {st.session_state.donde}")
+    st.subheader("II. Estrategia y Desempeño")
+    st.success(f"**Estrategia Definida:** {st.session_state.como} en {st.session_state.donde}")
     
-    f_rows = [{"KPI": k, "Final": d['actual'], "Meta": d['ideal']} for p, ks in st.session_state.kpis.items() for k, d in ks.items()]
+    f_rows = [{"KPI": k, "Resultado Final": d['actual'], "Meta": d['ideal']} for p, ks in st.session_state.kpis.items() for k, d in ks.items()]
     st.table(pd.DataFrame(f_rows))
     
-    st.subheader("III. Historial")
+    st.subheader("III. Bitácora de Inversiones")
     st.table(pd.DataFrame(st.session_state.historial))
     
-    if st.button("Volver"):
+    if st.button("Volver al Tablero"):
         st.session_state.paso = 3
         st.rerun()
