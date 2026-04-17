@@ -112,10 +112,12 @@ if st.session_state.paso == 1:
 elif st.session_state.paso == 2:
     st.title("Fase 2: Estrategia Play to Win")
     with st.form("estrategia_form"):
+        aspiracion = st.text_input("¿Cuál es nuestra aspiración?") 
         donde = st.text_input("¿Dónde jugar?")
         como = st.text_input("¿Cómo ganar?")
         que = st.text_input("¿Qué capacidades deben estar presentes?")
         if st.form_submit_button("Iniciar Simulador"):
+            st.session_state.donde = aspiracion
             st.session_state.donde = donde
             st.session_state.como = como
             st.session_state.que = que
@@ -213,7 +215,7 @@ elif st.session_state.paso == 4:
     st.markdown("---")
     st.subheader("III. Estrategia y Resultados Obtenidos")
     # Propuesta Integrada de los 3 elementos
-    st.success(f"**Estrategia:** {st.session_state.como} en {st.session_state.donde} apalancado en {st.session_state.que}")
+    st.success(f"**Estrategia:** Nuestra Aspiración es {st.session_state.aspiracion}  {st.session_state.como} en {st.session_state.donde} apalancado en {st.session_state.que}")
     
     # KPIs Finales
     final_rows = []
