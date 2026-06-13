@@ -142,9 +142,9 @@ if st.session_state.paso == 1:
 elif st.session_state.paso == 2:
     st.markdown("<h1>Fase 2: Estrategia Play to Win</h1>", unsafe_allow_html=True)
     with st.form("estrategia_form"):
-        asp = st.text_input("¿Cuál es nuestra aspiración ganadora?")
-        don = st.text_input("¿Dónde jugaremos?")
-        com = st.text_input("¿Cómo ganaremos?")
+        asp = st.text_input("¿Cuál es nuestra aspiración ganadora? vision")
+        don = st.text_input("¿Dónde jugaremos? en que mercado")
+        com = st.text_input("¿Cómo ganaremos? cual es la ventaja competitiva que buscaremos")
         que = st.text_input("¿Qué capacidades deben estar presentes?")
         
         btn_validar = st.form_submit_button("Validar y Continuar")
@@ -237,6 +237,6 @@ elif st.session_state.paso == 4:
 
     st.subheader("IV. Reflexión Crítica")
     st.write(f"Tu score de coherencia fue de **{st.session_state.score_coherencia}%**.")
-    st.text_area("Basado en tus resultados y el score de coherencia, ¿qué ajustes harías a la estrategia original?", height=150)
+    st.text_area("Basado en tus resultados ¿qué ajustes harías a la estrategia original?", height=150)
     
     if st.button("Finalizar Actividad"): st.balloons()
